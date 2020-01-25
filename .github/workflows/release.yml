@@ -1,69 +1,18 @@
 name: Go Release
-on: [release]
+on: release
 jobs:
-  release-linux-386:
-    name: Release linux/386
+  release:
+    name: Release for ${{ matrix.goos }}-${{ matrix.goarch }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [ linux, darwin, windows ]
+        goarch: [ amd64, '386' ]
     steps:
     - uses: actions/checkout@master
     - name: Compile and release
       uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: "386"
-        GOOS: linux
-  release-linux-amd64:
-    name: Release linux/amd64
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Compile and release
-      uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: amd64
-        GOOS: linux
-  release-darwin-386:
-    name: Release darwin/386
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Compile and release
-      uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: "386"
-        GOOS: darwin
-  release-darwin-amd64:
-    name: Release darwin/amd64
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Compile and release
-      uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: amd64
-        GOOS: darwin
-  release-windows-386:
-    name: Release windows/386
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Compile and release
-      uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: "386"
-        GOOS: windows
-  release-windows-amd64:
-    name: Release windows/amd64
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Compile and release
-      uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: amd64
-        GOOS: windows
+        GOARCH: ${{ matrix.goarch }}
+        GOOS: ${{ matrix.goos }}
