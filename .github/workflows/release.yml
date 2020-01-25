@@ -36,12 +36,12 @@ jobs:
           go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
           mkdir uv3dp-${{ steps.release.outputs.TAG }}
           cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
-          tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
+          tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
 
       - name: Craft Windows Artifacts
         run: |
           GOOS=windows GOARCH=amd64 go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
-          zip -j uv3dp-${{ steps.release.outputs.TAG }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp
+          zip -j uv3dp-${{ steps.release.outputs.TAG }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp.exe
 
       - name: Create Release
         id: create_release
@@ -60,8 +60,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uv3dp-${{ steps.release.outputs.TAG }}.tar.bz2
-          asset_name: uv3dp-${{ steps.release.outputs.TAG }}.tar.bz2
+          asset_path: ./uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2
+          asset_name: uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2
           asset_content_type: application/x-bzip-compressed-tar
       - name: Upload Windows Release Asset
         id: upload-release-asset-windows
