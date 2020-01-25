@@ -1,6 +1,7 @@
-on: push
-  tags:
-  - 'v*' # Called on push with version tags (ie v1.2.3)
+on:
+  push:
+    tags:
+    - 'v*' # Called on push with version tags (ie v1.2.3)
 name: Go Release
 
 jobs:
