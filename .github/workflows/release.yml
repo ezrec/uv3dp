@@ -1,18 +1,70 @@
+on: push
+  tags:
+  - 'v*' # Called on push with version tags (ie v1.2.3)
 name: Go Release
-on: release
+
 jobs:
-  release:
-    name: Release for ${{ matrix.goos }}-${{ matrix.goarch }}
+  build:
+    name: Upload Release Asset
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [ linux, darwin, windows ]
-        goarch: [ amd64, '386' ]
     steps:
-    - uses: actions/checkout@master
-    - name: Compile and release
-      uses: ngs/go-release.action@97964071182a2e1eafd88226265517b9dd93fee9
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOARCH: ${{ matrix.goarch }}
-        GOOS: ${{ matrix.goos }}
+
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+
+      - name: Craft Linux Artifacts
+        run: |
+          go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          mkdir uv3dp-${{ github.ref }}
+          cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ github.ref }}
+          tar -jcvf uv3dp-${{ github.ref }}.tar.bz2 uv3dp-${{ github.ref }}
+
+      - name: Craft Windows Artifacts
+        run: |
+          GOOS=windows GOARCH=amd64 go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          zip -j uv3dp-${{ github.ref }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Linux Release Asset
+        id: upload-release-asset-linux
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./uv3dp-${{ github.ref }}.tar.bz2
+          asset_name: uv3dp-${{ github.ref }}.tar.bz2
+          asset_content_type: application/x-bzip-compressed-tar
+      - name: Upload Windows Release Asset
+        id: upload-release-asset-windows
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./uv3dp-${{ github.ref }}.zip
+          asset_name: uv3dp-${{ github.ref }}.zip
+          asset_content_type: application/zip
