@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"strings"
 
@@ -16,62 +15,14 @@ import (
 	"github.com/ezrec/uv3dp/cbddlp"
 	"github.com/ezrec/uv3dp/sl1"
 
-	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
-
 	"github.com/spf13/pflag"
-
-	"golang.org/x/image/colornames"
 )
 
 const (
 	defaultCachedLayers = 64
 )
 
-func pixel_run(uv uv3dp.Printable) {
-	prop := uv.Properties()
-	layerCount := prop.Size.Layers
-	bounds := prop.Bounds()
-	size := bounds.Size()
-
-	const scaling = 0.5
-
-	cfg := pixelgl.WindowConfig{
-		Title:  "Printable",
-		Bounds: pixel.R(0, 0, float64(size.Y)*scaling, float64(size.X)*scaling),
-		VSync:  true,
-	}
-
-	win, err := pixelgl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	// Enable smoothing
-	win.SetSmooth(true)
-
-	center := win.Bounds().Center()
-	mat := pixel.IM
-	mat = mat.Scaled(pixel.ZV, scaling)
-	mat = mat.Rotated(pixel.ZV, math.Pi/2)
-	mat = mat.Moved(center)
-
-	n := 0
-	for !win.Closed() {
-		win.Clear(colornames.Wheat)
-		layer := uv.Layer(n)
-		pic := pixel.PictureDataFromImage(layer.Image)
-		sprite := pixel.NewSprite(pic, pic.Bounds())
-
-		sprite.Draw(win, mat)
-		win.Update()
-		n = (n + 1) % layerCount
-	}
-
-}
-
 var param struct {
-	show     bool
 	decimate bool
 	input    string
 	output   string
@@ -79,7 +30,6 @@ var param struct {
 
 func init() {
 	pflag.BoolVarP(&param.decimate, "decimate", "D", false, "Decimate layers of the file")
-	pflag.BoolVarP(&param.show, "show", "S", false, "Show layers of the file")
 	pflag.StringVarP(&param.input, "input", "i", "", "Input file")
 	pflag.StringVarP(&param.output, "output", "o", "", "Output file")
 }
@@ -163,9 +113,7 @@ func evaluate() (err error) {
 		input = uv3dp.NewDecimatedPrintable(input)
 	}
 
-	if param.show {
-		pixelgl.Run(func() { pixel_run(input) })
-	} else if len(param.output) > 0 {
+	if len(param.output) > 0 {
 		var encoder uv3dp.PrintableEncoder
 		encoder, err = encoderBySuffix(param.output)
 		if err != nil {
