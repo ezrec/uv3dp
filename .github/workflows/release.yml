@@ -12,7 +12,7 @@ jobs:
       - name: Get release information
         id: release
         run: |
-          echo ::set-output name=TAG:::${GITHUB_REF/refs\/tags\//}
+          echo ::set-output name=TAG::${GITHUB_REF/refs\/tags\//}
 
       - name: Set up Go 1.13
         uses: actions/setup-go@v1
