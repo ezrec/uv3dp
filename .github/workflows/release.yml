@@ -9,6 +9,10 @@ jobs:
     name: Upload Release Asset
     runs-on: ubuntu-latest
     steps:
+      - name: Get release information
+        id: release
+        run: |
+          echo ::set-output name=TAG:::${GITHUB_REF/refs\/tags\//}
 
       - name: Set up Go 1.13
         uses: actions/setup-go@v1
@@ -30,14 +34,14 @@ jobs:
       - name: Craft Linux Artifacts
         run: |
           go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
-          mkdir uv3dp-${{ github.ref }}
-          cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ github.ref }}
-          tar -jcvf uv3dp-${{ github.ref }}.tar.bz2 uv3dp-${{ github.ref }}
+          mkdir uv3dp-${{ steps.release.outputs.TAG }}
+          cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
+          tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
 
       - name: Craft Windows Artifacts
         run: |
           GOOS=windows GOARCH=amd64 go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
-          zip -j uv3dp-${{ github.ref }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp
+          zip -j uv3dp-${{ steps.release.outputs.TAG }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp
 
       - name: Create Release
         id: create_release
@@ -45,8 +49,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.release.outputs.TAG }}
+          release_name: Release ${{ steps.release.outputs.TAG }}
           draft: false
           prerelease: false
       - name: Upload Linux Release Asset
@@ -56,8 +60,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uv3dp-${{ github.ref }}.tar.bz2
-          asset_name: uv3dp-${{ github.ref }}.tar.bz2
+          asset_path: ./uv3dp-${{ steps.release.outputs.TAG }}.tar.bz2
+          asset_name: uv3dp-${{ steps.release.outputs.TAG }}.tar.bz2
           asset_content_type: application/x-bzip-compressed-tar
       - name: Upload Windows Release Asset
         id: upload-release-asset-windows
@@ -66,6 +70,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./uv3dp-${{ github.ref }}.zip
-          asset_name: uv3dp-${{ github.ref }}.zip
+          asset_path: ./uv3dp-${{ steps.release.outputs.TAG }}.zip
+          asset_name: uv3dp-${{ steps.release.outputs.TAG }}.zip
           asset_content_type: application/zip
