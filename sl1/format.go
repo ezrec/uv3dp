@@ -14,11 +14,13 @@ import (
 	"image/png"
 	"io"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ezrec/uv3dp"
+	"github.com/spf13/pflag"
 )
 
 const (
@@ -113,11 +115,122 @@ type Sl1 struct {
 	layerPng   []([]byte)
 }
 
-func Encoder(writer uv3dp.WriteAtSeeker, printable uv3dp.Printable) (err error) {
+type Sl1Format struct {
+	*pflag.FlagSet
+
+	MaterialName string
+}
+
+func NewSl1Formatter(suffix string) (sf *Sl1Format) {
+	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
+
+	sf = &Sl1Format{
+		FlagSet: flagSet,
+	}
+
+	sf.StringVarP(&sf.MaterialName, "material-name", "m", "3DM-ABS @", "config.init entry 'materialName'")
+	sf.SetInterspersed(false)
+
 	return
 }
 
-func Decoder(reader uv3dp.ReadAtSeeker, filesize int64) (printable uv3dp.Printable, err error) {
+func sl1Timestamp() (stamp string) {
+	now := time.Now().UTC()
+
+	stamp = fmt.Sprintf("%d-%02d-%02d at %02d:%02d:%02d UTC", now.Year(), int(now.Month()), now.Day(), now.Hour(), now.Minute(), now.Second())
+	return
+}
+
+func (sf *Sl1Format) Encode(writer uv3dp.WriteAtSeeker, printable uv3dp.Printable) (err error) {
+	archive := zip.NewWriter(writer)
+	defer archive.Close()
+
+	prop := printable.Properties()
+
+	size := &prop.Size
+	exp := &prop.Exposure
+	bot := &prop.Bottom.Exposure
+
+	layerHeight := fmt.Sprintf("%.3g", size.LayerHeight)
+	materialName := sf.MaterialName
+	if strings.HasSuffix(materialName, " @") {
+		materialName += layerHeight
+	}
+
+	config_ini := map[string]string{
+		"action":                "print",
+		"jobDir":                "uv3dp",
+		"expTime":               fmt.Sprintf("%.3g", float64(exp.LightExposure)/float64(time.Second)),
+		"expTimeFirst":          fmt.Sprintf("%.3g", float64(bot.LightExposure)/float64(time.Second)),
+		"fileCreationTimestamp": sl1Timestamp(),
+		"layerHeight":           layerHeight,
+		"materialName":          materialName,
+		"numFade":               fmt.Sprintf("%v", prop.Bottom.Count),
+		"numFast":               fmt.Sprintf("%v", size.Layers),
+		"numSlow":               "0",
+		"printProfile":          layerHeight + " Normal",
+		"printTime":             fmt.Sprintf("%.3f", float64(prop.Duration())/float64(time.Second)),
+		"printerModel":          "SL1",
+		"printerProfile":        "Original Prusa SL1",
+		"prusaSlicerVersion":    "uv3dp",
+		"usedMaterial":          "0.0", // TODO: Calculate this properly!
+	}
+
+	// Create the config file
+	fileConfig, err := archive.Create("config.ini")
+	if err != nil {
+		return
+	}
+
+	attrs := []string{}
+	for attr, _ := range config_ini {
+		attrs = append(attrs, attr)
+	}
+	sort.Strings(attrs)
+
+	for _, attr := range attrs {
+		fmt.Fprintf(fileConfig, "%v = %v\n", attr, config_ini[attr])
+	}
+
+	// Create all the layers
+	for n := 0; n < size.Layers; n++ {
+		layer := printable.Layer(n)
+
+		filename := fmt.Sprintf("%s%05d.png", config_ini["jobDir"], n)
+
+		var writer io.Writer
+		writer, err = archive.Create(filename)
+		if err != nil {
+			return
+		}
+
+		err = png.Encode(writer, layer.Image)
+		if err != nil {
+			return
+		}
+	}
+
+	// Save the thumbnails
+	for _, image := range prop.Preview {
+		imageSize := image.Bounds().Size()
+		filename := fmt.Sprintf("thumbnail/thumbnail%dx%d.png", imageSize.X, imageSize.Y)
+
+		var writer io.Writer
+		writer, err = archive.Create(filename)
+		if err != nil {
+			return
+		}
+
+		err = png.Encode(writer, image)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (sf *Sl1Format) Decode(reader uv3dp.ReadAtSeeker, filesize int64) (printable uv3dp.Printable, err error) {
 	archive, err := zip.NewReader(reader, filesize)
 	if err != nil {
 		return

@@ -61,6 +61,25 @@ type Properties struct {
 	Preview  map[PreviewType]image.Image
 }
 
+// Get image bounds
+func (prop *Properties) Bounds() image.Rectangle {
+	return image.Rect(0, 0, prop.Size.X, prop.Size.Y)
+}
+
+// Get total printing time
+func (prop *Properties) Duration() (duration time.Duration) {
+	size := &prop.Size
+	bot := &prop.Bottom.Exposure
+	botCount := prop.Bottom.Count
+	exp := &prop.Exposure
+	botTime := bot.Duration() * time.Duration(botCount)
+	expTime := exp.Duration() * time.Duration(size.Layers-int(botCount))
+
+	duration = botTime + expTime
+
+	return
+}
+
 // Everything needed to print a single layer
 type Layer struct {
 	Z        float32     // Z height in mm
@@ -83,11 +102,4 @@ type WriteAtSeeker interface {
 	io.Writer
 	io.WriterAt
 	io.Seeker
-}
-
-type PrintableDecoder func(reader ReadAtSeeker, size int64) (printable Printable, err error)
-type PrintableEncoder func(writer WriteAtSeeker, printable Printable) (err error)
-
-func (prop *Properties) Bounds() image.Rectangle {
-	return image.Rect(0, 0, prop.Size.X, prop.Size.Y)
 }

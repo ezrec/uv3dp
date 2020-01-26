@@ -12,6 +12,7 @@ import (
 	"encoding/binary"
 
 	"github.com/go-restruct/restruct"
+	"github.com/spf13/pflag"
 
 	"github.com/ezrec/uv3dp"
 )
@@ -109,8 +110,39 @@ func align4(in uint32) (out uint32) {
 	return
 }
 
+type CbddlpFormatter struct {
+	*pflag.FlagSet
+
+	Version uint32 // Version of file to use, one of [1,2]
+}
+
+func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
+	var version uint32
+
+	switch suffix {
+	case ".cbddlp":
+		version = 2
+	case ".photon":
+		version = 1
+	default:
+		version = 1
+	}
+
+	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
+	flagSet.SetInterspersed(false)
+
+	cf = &CbddlpFormatter{
+		FlagSet: flagSet,
+		Version: version,
+	}
+
+	cf.Uint32Var(&cf.Version, "version", version, "Override header Version")
+
+	return
+}
+
 // Save a uv3dp.Printable in CBD DLP format
-func Encoder(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
+func (cf *CbddlpFormatter) Encode(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
 	properties := p.Properties()
 
 	size := &properties.Size
@@ -127,7 +159,7 @@ func Encoder(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
 
 	headerBase := uint32(0)
 	header := cbddlpHeader{
-		Version: 2,
+		Version: cf.Version,
 	}
 	headerSize, _ := restruct.SizeOf(&header)
 
@@ -177,6 +209,11 @@ func Encoder(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
 	paramSize, _ := restruct.SizeOf(&param)
 
 	layerDefBase := paramBase + uint32(paramSize)
+	if header.Version < 2 {
+		// Omit param items
+		layerDefBase = paramBase
+	}
+
 	layerDef := make([]cbddlpLayerDef, size.Layers)
 	layerDefSize, _ := restruct.SizeOf(&layerDef[0])
 
@@ -225,22 +262,26 @@ func Encoder(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
 	header.LayerDefs = layerDefBase
 	header.LayerCount = uint32(size.Layers)
 	header.PreviewLow = previewTinyBase
-	botTime := bot.Exposure.Duration() * time.Duration(bot.Count)
-	expTime := exp.Duration() * time.Duration(size.Layers-int(bot.Count))
-	header.PrintTime = uint32((botTime + expTime) / time.Second)
+	header.PrintTime = uint32(properties.Duration() / time.Second)
 	header.Projector = 1 // LCD_X_MIRROR
-	header.ParamOffset = paramBase
-	header.ParamSize = uint32(paramSize)
-	header.AntiAliasLevel = 0
+
+	if header.Version >= 2 {
+		header.ParamOffset = paramBase
+		header.ParamSize = uint32(paramSize)
+		header.AntiAliasLevel = 0
+	}
+
 	header.LightPWM = 255
 	header.BottomLightPWM = 255
 
-	// cbddlpParam
-	param.BottomLiftSpeed = bot.Exposure.LiftSpeed
-	param.BottomLiftHeight = bot.Exposure.LiftHeight
-	param.LiftHeight = exp.LiftHeight
-	param.LiftSpeed = exp.LiftSpeed
-	param.RetractSpeed = exp.RetractSpeed
+	if header.Version >= 2 {
+		// cbddlpParam
+		param.BottomLiftSpeed = bot.Exposure.LiftSpeed
+		param.BottomLiftHeight = bot.Exposure.LiftHeight
+		param.LiftHeight = exp.LiftHeight
+		param.LiftSpeed = exp.LiftSpeed
+		param.RetractSpeed = exp.RetractSpeed
+	}
 
 	// Compute total cubic millimeters (== milliliters) of all the on pixels
 	bedArea := float64(header.BedSizeMM[0] * header.BedSizeMM[1])
@@ -260,10 +301,12 @@ func Encoder(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
 		return
 	}
 
-	data, _ = restruct.Pack(binary.LittleEndian, &param)
-	_, err = writer.WriteAt(data, int64(paramBase))
-	if err != nil {
-		return
+	if header.Version >= 2 {
+		data, _ = restruct.Pack(binary.LittleEndian, &param)
+		_, err = writer.WriteAt(data, int64(paramBase))
+		if err != nil {
+			return
+		}
 	}
 
 	for n, layer := range layerDef {
@@ -297,7 +340,7 @@ func Encoder(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
 	return
 }
 
-func Decoder(file uv3dp.ReadAtSeeker, filesize int64) (printable uv3dp.Printable, err error) {
+func (cf *CbddlpFormatter) Decode(file uv3dp.ReadAtSeeker, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -470,7 +513,6 @@ func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
 	layerImage, err := rleDecodeBitmap(bounds, cbd.rleMap[layerDef.ImageOffset])
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	layer = uv3dp.Layer{

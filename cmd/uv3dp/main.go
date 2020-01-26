@@ -5,15 +5,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"io"
-	"os"
-	"strings"
 
 	"github.com/ezrec/uv3dp"
-	"github.com/ezrec/uv3dp/cbddlp"
-	"github.com/ezrec/uv3dp/sl1"
+	_ "github.com/ezrec/uv3dp/cbddlp"
+	_ "github.com/ezrec/uv3dp/sl1"
 
 	"github.com/spf13/pflag"
 )
@@ -22,114 +18,143 @@ const (
 	defaultCachedLayers = 64
 )
 
+type Verbosity int
+
+const (
+	VerbosityWarning = Verbosity(iota)
+	VerbosityNotice
+	VerbosityInfo
+	VerbosityDebug
+)
+
 var param struct {
-	decimate bool
-	input    string
-	output   string
+	Verbose int // Verbose counts the number of '-v' flags
+}
+
+func TraceVerbosef(level Verbosity, format string, args ...interface{}) {
+	if param.Verbose >= int(level) {
+		fmt.Printf("<%v>", level)
+		fmt.Printf(format+"\n", args...)
+	}
+}
+
+type Commander interface {
+	Parse(args []string) error
+	Args() []string
+	NArg() int
+	PrintDefaults()
+	Filter(input uv3dp.Printable) (output uv3dp.Printable, err error)
+}
+
+var commandMap = map[string]struct {
+	NewCommander func() (cmd Commander)
+	Description  string
+}{
+	"info": {
+		NewCommander: func() Commander { return NewInfoCommand() },
+		Description:  "Dumps information about the printable",
+	},
+	"decimate": {
+		NewCommander: func() Commander { return NewDecimateCommand() },
+		Description:  "Remove outmost pixels of all islands in each layer (reduces over-curing on edges)",
+	},
+	"exposure": {
+		NewCommander: func() Commander { return NewExposureCommand() },
+		Description:  "Alters exposure times",
+	},
+}
+
+func Usage() {
+	fmt.Println("Usage:")
+	fmt.Println()
+	fmt.Println("  uv3dp [options] INFILE [command [options] | OUTFILE]...")
+	fmt.Println()
+	fmt.Println("Options:")
+	fmt.Println()
+	pflag.PrintDefaults()
+	fmt.Println()
+	fmt.Println("Commands:")
+	fmt.Println()
+	fmt.Printf("  %-20s %s\n", "(none)", "Translates input file to output file")
+
+	for key, item := range commandMap {
+		fmt.Printf("  %-20s %s\n", key, item.Description)
+	}
+
+	for key, item := range commandMap {
+		fmt.Println()
+		fmt.Printf("Options for '%s':\n", key)
+		fmt.Println()
+		item.NewCommander().PrintDefaults()
+	}
+
+	uv3dp.FormatterUsage()
 }
 
 func init() {
-	pflag.BoolVarP(&param.decimate, "decimate", "D", false, "Decimate layers of the file")
-	pflag.StringVarP(&param.input, "input", "i", "", "Input file")
-	pflag.StringVarP(&param.output, "output", "o", "", "Output file")
+	pflag.CountVarP(&param.Verbose, "verbose", "v", "Verbosity")
+	pflag.SetInterspersed(false)
 }
 
-func decoderBySuffix(file string) (decoder uv3dp.PrintableDecoder, err error) {
-	switch {
-	case strings.HasSuffix(file, ".cbddlp") || strings.HasSuffix(file, ".photon"):
-		decoder = cbddlp.Decoder
-	case strings.HasSuffix(file, ".sl1"):
-		decoder = sl1.Decoder
-	default:
-		err = errors.New(fmt.Sprintf("File '%s' not a recognized format", file))
+func evaluate(args []string) (err error) {
+	if len(args) == 0 {
+		Usage()
 		return
 	}
 
-	return
-}
+	var input uv3dp.Printable
+	var format *uv3dp.Format
 
-func encoderBySuffix(file string) (encoder uv3dp.PrintableEncoder, err error) {
-	switch {
-	case strings.HasSuffix(file, ".cbddlp") || strings.HasSuffix(file, ".photon"):
-		encoder = cbddlp.Encoder
-	case strings.HasSuffix(file, ".sl1"):
-		encoder = sl1.Encoder
-	default:
-		err = errors.New(fmt.Sprintf("File '%s' not a recognized format", file))
-		return
-	}
-
-	return
-}
-
-func evaluate() (err error) {
-	if len(param.input) == 0 {
-		err = errors.New("-input: Required parameter missing")
-		return
-	}
-
-	decoder, err := decoderBySuffix(param.input)
-	if err != nil {
-		return
-	}
-
-	var reader *os.File
-	reader, err = os.Open(param.input)
-	if err != nil {
-		return
-	}
-	defer func() { reader.Close() }()
-
-	filesize, err := reader.Seek(0, io.SeekEnd)
-	if err != nil {
-		return
-	}
-
-	_, err = reader.Seek(0, io.SeekStart)
-	if err != nil {
-		return
-	}
-
-	input, err := decoder(reader, filesize)
-	if err != nil {
-		return
-	}
-
-	input = uv3dp.NewCachedPrintable(input, defaultCachedLayers)
-
-	prop := input.Properties()
-	size := &prop.Size
-	fmt.Printf("Layers: %v, %vx%v slices, %.2f x %.2f x %.2f mm bed required\n",
-		size.Layers, size.X, size.Y,
-		size.Millimeter.X, size.Millimeter.Y, float32(size.Layers)*size.LayerHeight)
-
-	exp := &prop.Exposure
-	bot := &prop.Bottom
-	fmt.Printf("Exposure: %v on, %v off nominal, %v bottom (%v layers)\n",
-		exp.LightExposure, exp.LightOffTime,
-		bot.Exposure.LightExposure, bot.Count)
-
-	if param.decimate {
-		input = uv3dp.NewDecimatedPrintable(input)
-	}
-
-	if len(param.output) > 0 {
-		var encoder uv3dp.PrintableEncoder
-		encoder, err = encoderBySuffix(param.output)
-		if err != nil {
+	for len(args) > 0 {
+		if args[0] == "help" {
+			Usage()
 			return
 		}
 
-		var writer *os.File
-		writer, err = os.Create(param.output)
-		if err != nil {
-			return
-		}
-		defer func() { writer.Close() }()
+		item, found := commandMap[args[0]]
+		if !found {
+			format, err = uv3dp.NewFormat(args[0], args[1:])
+			if err != nil {
+				return err
+			}
+			err = format.Parse(args[1:])
+			if err != nil {
+				return err
+			}
+			TraceVerbosef(VerbosityNotice, "%v", args)
+			args = format.Args()
 
-		err = encoder(writer, input)
-		if err != nil {
-			return
+			if input == nil {
+				// If we have no input, get it from this file
+				input, err = format.Printable()
+				TraceVerbosef(VerbosityDebug, "%v: Input (err: %v)", format.Filename, err)
+				if err != nil {
+					return
+				}
+
+				// Cache layer decoding
+				input = uv3dp.NewCachedPrintable(input, defaultCachedLayers)
+			} else {
+				// Otherwise save the file
+				err = format.SetPrintable(input)
+				TraceVerbosef(VerbosityDebug, "%v: Output (err: %v)", format.Filename, err)
+				if err != nil {
+					return
+				}
+			}
+		} else {
+			cmd := item.NewCommander()
+			err = cmd.Parse(args[1:])
+			if err != nil {
+				return
+			}
+			TraceVerbosef(VerbosityNotice, "%v", args)
+			args = cmd.Args()
+
+			input, err = cmd.Filter(input)
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -139,13 +164,7 @@ func evaluate() (err error) {
 func main() {
 	pflag.Parse()
 
-	args := pflag.Args()
-	if len(args) != 0 {
-		pflag.Usage()
-		os.Exit(1)
-	}
-
-	err := evaluate()
+	err := evaluate(pflag.Args())
 	if err != nil {
 		panic(err)
 	}
