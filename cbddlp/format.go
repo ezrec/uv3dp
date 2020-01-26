@@ -379,7 +379,6 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.ReadAtSeeker, filesize int64) (prin
 
 		addr := preview.ImageOffset
 		size := preview.ImageLength
-		println(item.previewType, item.previewOffset, addr, size)
 
 		bounds := image.Rect(0, 0, int(preview.ResolutionX), int(preview.ResolutionY))
 		var pic image.Image
