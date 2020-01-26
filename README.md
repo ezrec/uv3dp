@@ -17,9 +17,9 @@ The command line tool (available as a binary release at
 [https://github.com/ezrec/uv3dp/releases](github.com/ezrec/uv3dp) ) is designed to be used in a 'pipeline'
 style, for example:
 
-  uv3dp foo.sl1 info                    # Shows information about the SL1 file
-  uv3dp foo.sl1 decimate bar.cbddlp     # Converts and decimates a SL1 files to a CBDDLP file
-  uv3dp foo.sl1 qux.cbddlp --version 1  # Converts  a SL1 files to a CBDDLP file, forcing verion 1 CBDDLP file format
+    uv3dp foo.sl1 info                    # Shows information about the SL1 file
+    uv3dp foo.sl1 decimate bar.cbddlp     # Convert and decimates a SL1 file to a CBDDLP file
+    uv3dp foo.sl1 qux.cbddlp --version 1  # Convert a SL1 file to a Version 1CBDDLP file
 
 ### Command summary:
 
