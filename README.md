@@ -11,11 +11,14 @@ Printers known to work with this tool:
 | ------------ | ------------ | --------------------------------------------------|
 | EPAX X-1     | cbddlp       | None                                              |
 
+## Installation
+
+* Release package: [https://github.com/ezrec/uv3dp/releases](https://github.com/ezrec/uv3dp/releases)
+* Go install: `go get github.com/ezrec/uv3dp/cmd/uv3dp; ${GOROOT}/bin/uv3dp`
+
 ## Command Line Tool (`uv3dp`)
 
-The command line tool (available as a binary release at
-[https://github.com/ezrec/uv3dp/releases](github.com/ezrec/uv3dp) ) is designed to be used in a 'pipeline'
-style, for example:
+The command line tool is designed to be used in a 'pipeline' style, for example:
 
     uv3dp foo.sl1 info                    # Shows information about the SL1 file
     uv3dp foo.sl1 decimate bar.cbddlp     # Convert and decimates a SL1 file to a CBDDLP file
