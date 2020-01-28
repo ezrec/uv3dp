@@ -27,42 +27,62 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
 ### Command summary:
 
     Usage:
-    
+
       uv3dp [options] INFILE [command [options] | OUTFILE]...
-    
+
     Options:
-    
+
       -v, --verbose count   Verbosity
-    
+
     Commands:
-    
+
       (none)               Translates input file to output file
       info                 Dumps information about the printable
+      bed                  Adjust image for a different bed size/resolution
       decimate             Remove outmost pixels of all islands in each layer (reduces over-curing on edges)
       exposure             Alters exposure times
-    
-    Options for 'info':
-    
-      -e, --exposure   Show summary of the exposure settings (default true)
-      -l, --layers     Show summary of the layers (default true)
-    
-    Options for 'decimate':
-    
-    
+
     Options for 'exposure':
-    
+
           --bottom-count uint          Bottom layer count
           --bottom-exposure duration   Bottom layer light-on time
           --exposure duration          Normal layer light-on time
-    
-    Options for '*.cbddlp':
-    
-          --version uint32   Override header Version (default 2)
-    
-    Options for '*.photon':
-    
-          --version uint32   Override header Version (default 1)
-    
+
+    Options for 'info':
+
+      -e, --exposure   Show summary of the exposure settings (default true)
+      -l, --layer      Show layer detail
+      -s, --size       Show size summary (default true)
+
+    Options for 'bed':
+
+      -M, --machine string             Size preset by machine type (default "EPAX-X1")
+      -m, --millimeters float32Slice   Bed size, in millimeters (default [68.040001,120.959999])
+      -p, --pixels ints                Bed size, in pixels (default [1440,2560])
+
+      Machines:
+
+        Anycubic-Photon      1440x2560, 68x121 mm
+        EPAX-X1              1440x2560, 68x121 mm
+        EPAX-X10             1440x2560, 135x216 mm
+        EPAX-X133            2160x3840, 165x293 mm
+        EPAX-X156            2160x3840, 194x345 mm
+        EPAX-X9              1600x2560, 120x192 mm
+        Elogoo-Mars          1440x2560, 68x121 mm
+
+    Options for 'decimate':
+
+
     Options for '*.sl1':
-    
+
       -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
+
+    Options for '*.cbddlp':
+
+          --version uint32   Override header Version (default 2)
+
+    Options for '*.photon':
+
+          --version uint32   Override header Version (default 1)
+
+
