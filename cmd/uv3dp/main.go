@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/ezrec/uv3dp"
 	_ "github.com/ezrec/uv3dp/cbddlp"
@@ -69,26 +70,26 @@ var commandMap = map[string]struct {
 }
 
 func Usage() {
-	fmt.Println("Usage:")
-	fmt.Println()
-	fmt.Println("  uv3dp [options] INFILE [command [options] | OUTFILE]...")
-	fmt.Println()
-	fmt.Println("Options:")
-	fmt.Println()
+	fmt.Fprintln(os.Stderr, "Usage:")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "  uv3dp [options] INFILE [command [options] | OUTFILE]...")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Options:")
+	fmt.Fprintln(os.Stderr)
 	pflag.PrintDefaults()
-	fmt.Println()
-	fmt.Println("Commands:")
-	fmt.Println()
-	fmt.Printf("  %-20s %s\n", "(none)", "Translates input file to output file")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Commands:")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintf(os.Stderr, "  %-20s %s\n", "(none)", "Translates input file to output file")
 
 	for key, item := range commandMap {
-		fmt.Printf("  %-20s %s\n", key, item.Description)
+		fmt.Fprintf(os.Stderr, "  %-20s %s\n", key, item.Description)
 	}
 
 	for key, item := range commandMap {
-		fmt.Println()
-		fmt.Printf("Options for '%s':\n", key)
-		fmt.Println()
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintf(os.Stderr, "Options for '%s':\n", key)
+		fmt.Fprintln(os.Stderr)
 		item.NewCommander().PrintDefaults()
 	}
 
