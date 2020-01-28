@@ -7,6 +7,7 @@ package cbddlp
 import (
 	"image"
 	"io/ioutil"
+	"sort"
 	"time"
 
 	"encoding/binary"
@@ -142,7 +143,7 @@ func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
 }
 
 // Save a uv3dp.Printable in CBD DLP format
-func (cf *CbddlpFormatter) Encode(writer uv3dp.WriteAtSeeker, p uv3dp.Printable) (err error) {
+func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
 	properties := p.Properties()
 
 	size := &properties.Size
@@ -293,54 +294,55 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.WriteAtSeeker, p uv3dp.Printable)
 	param.LightOffTime = float32(exp.LightOffTime) / float32(time.Second)
 	param.BottomLayerCount = header.BottomCount
 
-	var data []byte
+	// Collect file data
+	fileData := map[int][]byte{}
 
-	data, _ = restruct.Pack(binary.LittleEndian, &header)
-	_, err = writer.WriteAt(data, int64(headerBase))
-	if err != nil {
-		return
-	}
+	fileData[int(headerBase)], _ = restruct.Pack(binary.LittleEndian, &header)
 
 	if header.Version >= 2 {
-		data, _ = restruct.Pack(binary.LittleEndian, &param)
-		_, err = writer.WriteAt(data, int64(paramBase))
-		if err != nil {
-			return
-		}
+		fileData[int(paramBase)], _ = restruct.Pack(binary.LittleEndian, &param)
 	}
 
 	for n, layer := range layerDef {
-		data, _ = restruct.Pack(binary.LittleEndian, &layer)
-		_, err = writer.WriteAt(data, int64(int(layerDefBase)+layerDefSize*n))
-		if err != nil {
-			return
-		}
+		base := int(layerDefBase) + layerDefSize*n
+		fileData[base], _ = restruct.Pack(binary.LittleEndian, &layer)
 	}
 
-	data, _ = restruct.Pack(binary.LittleEndian, &previewHuge)
-	_, err = writer.WriteAt(data, int64(previewHugeBase))
-	if err != nil {
-		return
-	}
-
-	data, _ = restruct.Pack(binary.LittleEndian, &previewTiny)
-	_, err = writer.WriteAt(data, int64(previewTinyBase))
-	if err != nil {
-		return
-	}
+	fileData[int(previewHugeBase)], _ = restruct.Pack(binary.LittleEndian, &previewHuge)
+	fileData[int(previewTinyBase)], _ = restruct.Pack(binary.LittleEndian, &previewTiny)
 
 	for _, hash := range rleHashList {
 		info := rleHash[hash]
-		_, err = writer.WriteAt(info.rle, int64(info.offset))
-		if err != nil {
-			return
-		}
+		fileData[int(info.offset)] = info.rle
+	}
+
+	// Sort the file data
+	fileIndex := []int{}
+	for key, _ := range fileData {
+		fileIndex = append(fileIndex, key)
+	}
+
+	sort.Ints(fileIndex)
+
+	offset := 0
+	for _, base := range fileIndex {
+		// Pad as needed
+		writer.Write(make([]byte, base-offset))
+
+		// Write the data
+		data := fileData[base]
+		delete(fileData, base)
+
+		writer.Write(data)
+
+		// Set up next offset
+		offset = base + len(data)
 	}
 
 	return
 }
 
-func (cf *CbddlpFormatter) Decode(file uv3dp.ReadAtSeeker, filesize int64) (printable uv3dp.Printable, err error) {
+func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
 	data, err := ioutil.ReadAll(file)
 	if err != nil {

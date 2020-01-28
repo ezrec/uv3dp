@@ -77,8 +77,8 @@ func TestEncodeBinary(t *testing.T) {
 	out_rle := []byte{
 		0x88, // 8 1 bits
 		0x08, // 8 0 bits
-		0xff, // 127 1 bits
-		0x86, // 6 1 bits
+		0xfd, // 125 1 bits
+		0x88, // 6 1 bits
 		0x02, // 2 0 bits
 		0x82, // 2 1 bits
 		0x01, // 1 0 bits
@@ -89,7 +89,7 @@ func TestEncodeBinary(t *testing.T) {
 		0x81, // 1 1 bits
 		0x09, // 9 0 bits
 	}
-	out_hash := uint64(0x6af1946f00bc6750)
+	out_hash := uint64(0x2b7a251cf0df82f0)
 	out_bits := uint(146)
 
 	rle, hash, bits := rleEncodeBitmap(gray)
@@ -120,8 +120,8 @@ func TestEncodeBinary(t *testing.T) {
 
 	rle, hash, bits = rleEncodeBitmap(gray)
 
-	out_rle = []byte{0x7f, 0x7f, 0x7f, 0x7f}
-	out_hash = uint64(0x939995cc670ee1d4)
+	out_rle = []byte{0x7d, 0x7d, 0x7d, 0x7d, 0x08}
+	out_hash = uint64(0x174c6ac17d4207cf)
 	out_bits = 0
 
 	if out_bits != bits {

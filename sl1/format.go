@@ -141,7 +141,7 @@ func sl1Timestamp() (stamp string) {
 	return
 }
 
-func (sf *Sl1Format) Encode(writer uv3dp.WriteAtSeeker, printable uv3dp.Printable) (err error) {
+func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
 	archive := zip.NewWriter(writer)
 	defer archive.Close()
 
@@ -230,7 +230,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.WriteAtSeeker, printable uv3dp.Printabl
 	return
 }
 
-func (sf *Sl1Format) Decode(reader uv3dp.ReadAtSeeker, filesize int64) (printable uv3dp.Printable, err error) {
+func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	archive, err := zip.NewReader(reader, filesize)
 	if err != nil {
 		return

@@ -6,7 +6,6 @@ package uv3dp
 
 import (
 	"image"
-	"io"
 	"time"
 )
 
@@ -90,16 +89,4 @@ type Layer struct {
 type Printable interface {
 	Properties() (prop Properties)
 	Layer(index int) (layer Layer)
-}
-
-type ReadAtSeeker interface {
-	io.Reader
-	io.ReaderAt
-	io.Seeker
-}
-
-type WriteAtSeeker interface {
-	io.Writer
-	io.WriterAt
-	io.Seeker
 }

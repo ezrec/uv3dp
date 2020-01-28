@@ -11,6 +11,17 @@ import (
 	"strings"
 )
 
+// Reader needs io.ReaderAt for archive/zip
+type Reader interface {
+	io.Reader
+	io.ReaderAt
+}
+
+// Writer
+type Writer interface {
+	io.Writer
+}
+
 // Printable file format
 type Formatter interface {
 	Parse(args []string) (err error)
@@ -19,8 +30,8 @@ type Formatter interface {
 	NArg() int
 	PrintDefaults()
 
-	Decode(reader ReadAtSeeker, size int64) (printable Printable, err error)
-	Encode(writer WriteAtSeeker, printable Printable) (err error)
+	Decode(reader Reader, size int64) (printable Printable, err error)
+	Encode(writer Writer, printable Printable) (err error)
 }
 
 // Printable to file format
