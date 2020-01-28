@@ -54,6 +54,10 @@ var commandMap = map[string]struct {
 		NewCommander: func() Commander { return NewInfoCommand() },
 		Description:  "Dumps information about the printable",
 	},
+	"bed": {
+		NewCommander: func() Commander { return NewBedCommand() },
+		Description:  "Adjust image for a different bed size/resolution",
+	},
 	"decimate": {
 		NewCommander: func() Commander { return NewDecimateCommand() },
 		Description:  "Remove outmost pixels of all islands in each layer (reduces over-curing on edges)",
