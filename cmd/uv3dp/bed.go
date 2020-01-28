@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/spf13/pflag"
@@ -56,9 +57,9 @@ func NewBedCommand() (bc *BedCommand) {
 func (bc *BedCommand) PrintDefaults() {
 	bc.FlagSet.PrintDefaults()
 
-	fmt.Println()
-	fmt.Println("  Machines:")
-	fmt.Println()
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "  Machines:")
+	fmt.Fprintln(os.Stderr)
 
 	keys := []string{}
 	for key, _ := range machineMap {
@@ -69,7 +70,7 @@ func (bc *BedCommand) PrintDefaults() {
 
 	for _, key := range keys {
 		item := machineMap[key]
-		fmt.Printf("    %-20s %dx%d, %.3gx%.3g mm\n", key, item.X, item.Y, item.Xmm, item.Ymm)
+		fmt.Fprintf(os.Stderr, "    %-20s %dx%d, %.3gx%.3g mm\n", key, item.X, item.Y, item.Xmm, item.Ymm)
 	}
 }
 

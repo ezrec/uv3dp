@@ -50,9 +50,9 @@ func RegisterFormatter(suffix string, newFormatter NewFormatter) {
 func FormatterUsage() {
 	if formatterMap != nil {
 		for suffix, newFormatter := range formatterMap {
-			fmt.Println()
-			fmt.Printf("Options for '*%s':\n", suffix)
-			fmt.Println()
+			fmt.Fprintln(os.Stderr)
+			fmt.Fprintf(os.Stderr, "Options for '*%s':\n", suffix)
+			fmt.Fprintln(os.Stderr)
 			newFormatter(suffix).PrintDefaults()
 		}
 	}
