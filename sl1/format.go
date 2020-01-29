@@ -23,6 +23,10 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var (
+	time_Now = time.Now
+)
+
 const (
 	mmPerPixel       = 0.0472500
 	defaultPixelsX   = 1440
@@ -110,8 +114,8 @@ type ReadSeekCloser interface {
 }
 
 type Sl1 struct {
-	config     sl1Config
 	properties uv3dp.Properties
+	config     sl1Config
 	layerPng   []([]byte)
 }
 
@@ -135,7 +139,7 @@ func NewSl1Formatter(suffix string) (sf *Sl1Format) {
 }
 
 func sl1Timestamp() (stamp string) {
-	now := time.Now().UTC()
+	now := time_Now().UTC()
 
 	stamp = fmt.Sprintf("%d-%02d-%02d at %02d:%02d:%02d UTC", now.Year(), int(now.Month()), now.Day(), now.Hour(), now.Minute(), now.Second())
 	return
