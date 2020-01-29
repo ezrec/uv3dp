@@ -48,15 +48,26 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 	if info.ExposureSummary {
 		exp := &prop.Exposure
 		bot := &prop.Bottom
-		fmt.Printf("Exposure: %v on, %v off nominal, %v bottom (%v layers)\n",
+		var bottomStyle string
+		switch bot.Style {
+		case uv3dp.BottomStyleSlow:
+			bottomStyle = "slow"
+		case uv3dp.BottomStyleFade:
+			bottomStyle = "fade"
+		default:
+			bottomStyle = fmt.Sprintf("%+v", bot.Style)
+		}
+
+		fmt.Printf("Exposure: %v on, %v off nominal, %v bottom (%v %v layers)\n",
 			exp.LightExposure, exp.LightOffTime,
-			bot.Exposure.LightExposure, bot.Count)
+			bot.Exposure.LightExposure,
+			bot.Count, bottomStyle)
 	}
 
 	if info.LayerDetail {
 		for n := 0; n < prop.Size.Layers; n++ {
 			layer := input.Layer(n)
-			fmt.Printf("%d: @%.3g %v\n", n, layer.Z, *layer.Exposure)
+			fmt.Printf("%d: @%.3g %+v\n", n, layer.Z, *layer.Exposure)
 		}
 	}
 
