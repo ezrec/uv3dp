@@ -157,6 +157,13 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		materialName += layerHeight
 	}
 
+	numFade := 0
+	numSlow := prop.Bottom.Count
+	if prop.Bottom.Style == uv3dp.BottomStyleFade {
+		numFade = prop.Bottom.Count
+		numSlow = 0
+	}
+
 	config_ini := map[string]string{
 		"action":                "print",
 		"jobDir":                "uv3dp",
@@ -165,9 +172,9 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		"fileCreationTimestamp": sl1Timestamp(),
 		"layerHeight":           layerHeight,
 		"materialName":          materialName,
-		"numFade":               fmt.Sprintf("%v", prop.Bottom.Count),
+		"numFade":               fmt.Sprintf("%v", numFade),
 		"numFast":               fmt.Sprintf("%v", size.Layers),
-		"numSlow":               "0",
+		"numSlow":               fmt.Sprintf("%v", numSlow),
 		"printProfile":          layerHeight + " Normal",
 		"printTime":             fmt.Sprintf("%.3f", float64(prop.Duration())/float64(time.Second)),
 		"printerModel":          "SL1",
@@ -332,7 +339,14 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	bot := &prop.Bottom
 	bot.Exposure.LightExposure = time.Duration(config.expTimeFirst*1000) * time.Millisecond
-	bot.Count = int(config.numFade)
+
+	if config.numFade > 0 {
+		bot.Count = int(config.numFade)
+		bot.Style = uv3dp.BottomStyleFade
+	} else {
+		bot.Count = int(config.numSlow)
+		bot.Style = uv3dp.BottomStyleSlow
+	}
 
 	exp := &prop.Exposure
 	exp.LightExposure = time.Duration(config.expTime*1000) * time.Millisecond
@@ -372,14 +386,10 @@ func (sl1 *Sl1) Layer(index int) (layer uv3dp.Layer) {
 		panic(err)
 	}
 
-	if index < sl1.properties.Bottom.Count {
-		layer.Exposure = &sl1.properties.Bottom.Exposure
-	} else {
-		layer.Exposure = &sl1.properties.Exposure
-	}
-
 	layer.Z = float32(index) * sl1.properties.Size.LayerHeight
 	layer.Image = pngImage.(*image.Gray)
+	exposure := sl1.properties.LayerExposure(index)
+	layer.Exposure = &exposure
 
 	return
 }
