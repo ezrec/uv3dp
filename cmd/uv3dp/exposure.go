@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -19,6 +20,7 @@ type ExposureCommand struct {
 
 	BottomCount    uint // Number of bottom layers
 	BottomExposure time.Duration
+	BottomStyle    string // Style (either 'slow' or 'fade')
 }
 
 func NewExposureCommand() (ec *ExposureCommand) {
@@ -26,9 +28,10 @@ func NewExposureCommand() (ec *ExposureCommand) {
 		FlagSet: pflag.NewFlagSet("exposure", pflag.ContinueOnError),
 	}
 
-	ec.DurationVar(&ec.Exposure, "exposure", time.Duration(0), "Normal layer light-on time")
-	ec.UintVar(&ec.BottomCount, "bottom-count", 0, "Bottom layer count")
-	ec.DurationVar(&ec.BottomExposure, "bottom-exposure", time.Duration(0), "Bottom layer light-on time")
+	ec.DurationVarP(&ec.Exposure, "exposure", "e", time.Duration(0), "Normal layer light-on time")
+	ec.UintVarP(&ec.BottomCount, "bottom-count", "c", 0, "Bottom layer count")
+	ec.StringVarP(&ec.BottomStyle, "bottom-style", "s", "slow", "Bottom layer style - 'fade' or 'slow'")
+	ec.DurationVarP(&ec.BottomExposure, "bottom-exposure", "b", time.Duration(0), "Bottom layer light-on time")
 	ec.SetInterspersed(false)
 
 	return
@@ -74,6 +77,19 @@ func (ec *ExposureCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable
 	if ec.Changed("bottom-count") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer count %v", ec.BottomCount)
 		em.properties.Bottom.Count = int(ec.BottomCount)
+	}
+
+	if ec.Changed("bottom-style") {
+		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer style %v", ec.BottomStyle)
+		styleMap := map[string]uv3dp.BottomStyle{
+			"slow": uv3dp.BottomStyleSlow,
+			"fade": uv3dp.BottomStyleFade,
+		}
+		style, found := styleMap[ec.BottomStyle]
+		if !found {
+			panic(fmt.Sprintf("exposure: Invalid --bottom-style=%v", ec.BottomStyle))
+		}
+		em.properties.Bottom.Style = style
 	}
 
 	if ec.Changed("bottom-exposure") {

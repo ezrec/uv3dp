@@ -42,12 +42,6 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       decimate             Remove outmost pixels of all islands in each layer (reduces over-curing on edges)
       exposure             Alters exposure times
 
-    Options for 'exposure':
-
-          --bottom-count uint          Bottom layer count
-          --bottom-exposure duration   Bottom layer light-on time
-          --exposure duration          Normal layer light-on time
-
     Options for 'info':
 
       -e, --exposure   Show summary of the exposure settings (default true)
@@ -64,7 +58,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
 
         Anycubic-Photon      1440x2560, 68x121 mm
         EPAX-X1              1440x2560, 68x121 mm
-        EPAX-X10             1440x2560, 135x216 mm
+        EPAX-X10             1600x2560, 135x216 mm
         EPAX-X133            2160x3840, 165x293 mm
         EPAX-X156            2160x3840, 194x345 mm
         EPAX-X9              1600x2560, 120x192 mm
@@ -73,9 +67,12 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Options for 'decimate':
 
 
-    Options for '*.sl1':
+    Options for 'exposure':
 
-      -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
+      -c, --bottom-count uint          Bottom layer count
+      -b, --bottom-exposure duration   Bottom layer light-on time
+      -s, --bottom-style string        Bottom layer style - 'fade' or 'slow' (default "slow")
+      -e, --exposure duration          Normal layer light-on time
 
     Options for '*.cbddlp':
 
@@ -85,4 +82,6 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
 
           --version uint32   Override header Version (default 1)
 
+    Options for '*.sl1':
 
+      -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
