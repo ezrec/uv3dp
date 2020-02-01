@@ -5,6 +5,7 @@
 package cbddlp
 
 import (
+	"fmt"
 	"image"
 	"io/ioutil"
 	"sort"
@@ -35,7 +36,7 @@ const (
 )
 
 type cbddlpHeader struct {
-	Header         uint32     // 00
+	Magic          uint32     // 00
 	Version        uint32     // 04
 	BedSizeMM      [3]float32 // 08
 	_              [3]uint32  // 14
@@ -160,6 +161,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 
 	headerBase := uint32(0)
 	header := cbddlpHeader{
+		Magic:   defaultHeaderMagic,
 		Version: cf.Version,
 	}
 	headerSize, _ := restruct.SizeOf(&header)
@@ -247,7 +249,6 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	}
 
 	// cbddlpHeader
-	header.Header = defaultHeaderMagic
 	header.Version = 2
 	header.BedSizeMM[0] = size.Millimeter.X
 	header.BedSizeMM[1] = size.Millimeter.Y
@@ -356,6 +357,11 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 	header := cbddlpHeader{}
 	err = restruct.Unpack(data, binary.LittleEndian, &header)
 	if err != nil {
+		return
+	}
+
+	if header.Magic != defaultHeaderMagic {
+		err = fmt.Errorf("Unknown header magic: 0x%08x", header.Magic)
 		return
 	}
 
