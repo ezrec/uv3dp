@@ -254,7 +254,6 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	}
 
 	// cbddlpHeader
-	header.Version = 2
 	header.BedSizeMM[0] = size.Millimeter.X
 	header.BedSizeMM[1] = size.Millimeter.Y
 	header.BedSizeMM[2] = forceBedSizeMM_3
@@ -276,18 +275,34 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		header.ParamOffset = paramBase
 		header.ParamSize = uint32(paramSize)
 		header.AntiAliasLevel = 0
+		header.LightPWM = 255
+		header.BottomLightPWM = 255
 	}
-
-	header.LightPWM = 255
-	header.BottomLightPWM = 255
 
 	if header.Version >= 2 {
 		// cbddlpParam
+		param.BottomLayerCount = uint32(bot.Count)
 		param.BottomLiftSpeed = bot.Exposure.LiftSpeed
 		param.BottomLiftHeight = bot.Exposure.LiftHeight
 		param.LiftHeight = exp.LiftHeight
 		param.LiftSpeed = exp.LiftSpeed
 		param.RetractSpeed = exp.RetractSpeed
+
+		if param.BottomLiftSpeed == 0.0 {
+			param.BottomLiftSpeed = defaultBottomLiftSpeed
+		}
+		if param.BottomLiftHeight == 0.0 {
+			param.BottomLiftHeight = defaultBottomLiftHeight
+		}
+		if param.LiftHeight == 0.0 {
+			param.LiftHeight = defaultLiftHeight
+		}
+		if param.LiftSpeed == 0.0 {
+			param.LiftSpeed = defaultLiftSpeed
+		}
+		if param.RetractSpeed == 0.0 {
+			param.RetractSpeed = defaultRetractSpeed
+		}
 	}
 
 	// Compute total cubic millimeters (== milliliters) of all the on pixels
@@ -464,13 +479,11 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		// Use reasonable defaults
 		bot.Exposure.LiftHeight = defaultBottomLiftHeight
 		bot.Exposure.LiftSpeed = defaultBottomLiftSpeed
-		bot.Exposure.LightOffTime = defaultBottomLightOff
 		bot.Exposure.RetractSpeed = defaultRetractSpeed
 		bot.Exposure.RetractHeight = defaultRetractHeight
 
 		exp.LiftHeight = defaultLiftHeight
 		exp.LiftSpeed = defaultLiftSpeed
-		exp.LightOffTime = defaultLightOff
 		exp.RetractSpeed = defaultRetractSpeed
 		exp.RetractHeight = defaultRetractHeight
 	}
