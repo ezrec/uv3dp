@@ -42,7 +42,7 @@ type cbddlpHeader struct {
 	_              [3]uint32  // 14
 	LayerHeight    float32    // 20
 	LayerExposure  float32    // 24: Layer exposure (in seconds)
-	Bottom         float32    // 28: Bottom layers exporsure (in seconds)
+	BottomExposure float32    // 28: Bottom layers exporsure (in seconds)
 	LayerOffTime   float32    // 2c: Layer off time (in seconds)
 	BottomCount    uint32     // 30: Number of bottom layers
 	ResolutionX    uint32     // 34:
@@ -110,6 +110,14 @@ type CbdDlp struct {
 func align4(in uint32) (out uint32) {
 	out = (in + 0x3) & 0xfffffffc
 	return
+}
+
+func float32ToDuration(time_s float32) time.Duration {
+	return time.Duration(float64(time_s) * float64(time.Second))
+}
+
+func durationToFloat32(time_ns time.Duration) float32 {
+	return float32(float64(time_ns) / float64(time.Second))
 }
 
 type CbddlpFormatter struct {
@@ -235,14 +243,11 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 			imageBase = align4(imageBase + uint32(len(rle)))
 		}
 
-		layerExposure := layer.Exposure.LightExposure
-		layerOffTime := layer.Exposure.LightOffTime
-
 		layerHash[n] = hash
 		layerDef[n] = cbddlpLayerDef{
 			LayerHeight:   layer.Z,
-			LayerExposure: float32(layerExposure) / float32(time.Second),
-			LayerOffTime:  float32(layerOffTime) / float32(time.Second),
+			LayerExposure: durationToFloat32(layer.Exposure.LightExposure),
+			LayerOffTime:  durationToFloat32(layer.Exposure.LightOffTime),
 			ImageOffset:   rleHash[hash].offset,
 			ImageLength:   uint32(len(rle)),
 		}
@@ -254,9 +259,9 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	header.BedSizeMM[1] = size.Millimeter.Y
 	header.BedSizeMM[2] = forceBedSizeMM_3
 	header.LayerHeight = size.LayerHeight
-	header.LayerExposure = float32(exp.LightExposure) / float32(time.Second)
-	header.Bottom = float32(bot.Exposure.LightExposure) / float32(time.Second)
-	header.LayerOffTime = float32(exp.LightOffTime) / float32(time.Second)
+	header.LayerExposure = durationToFloat32(exp.LightExposure)
+	header.BottomExposure = durationToFloat32(bot.Exposure.LightExposure)
+	header.LayerOffTime = durationToFloat32(exp.LightOffTime)
 	header.BottomCount = uint32(bot.Count)
 	header.ResolutionX = uint32(size.X)
 	header.ResolutionY = uint32(size.Y)
@@ -291,8 +296,8 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	pixelVolume := float64(header.LayerHeight) * bedArea / float64(bedPixels)
 	param.VolumeMilliliters = float32(float64(totalOn) * pixelVolume / 1000.0)
 
-	param.BottomLightOffTime = float32(bot.Exposure.LightOffTime) / float32(time.Second)
-	param.LightOffTime = float32(exp.LightOffTime) / float32(time.Second)
+	param.BottomLightOffTime = durationToFloat32(bot.Exposure.LightOffTime)
+	param.LightOffTime = durationToFloat32(exp.LightOffTime)
 	param.BottomLayerCount = header.BottomCount
 
 	// Collect file data
@@ -426,12 +431,13 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 	size.LayerHeight = header.LayerHeight
 
 	exp := &prop.Exposure
-	exp.LightExposure = time.Duration(header.LayerExposure*1000) * time.Millisecond
-	exp.LightOffTime = time.Duration(header.LayerOffTime*1000) * time.Millisecond
+	exp.LightExposure = float32ToDuration(header.LayerExposure)
+	exp.LightOffTime = float32ToDuration(header.LayerOffTime)
 
 	bot := &prop.Bottom
 	bot.Count = int(header.BottomCount)
-	bot.Exposure.LightExposure = time.Duration(header.Bottom*1000) * time.Millisecond
+	bot.Exposure.LightExposure = float32ToDuration(header.BottomExposure)
+	bot.Exposure.LightOffTime = float32ToDuration(header.LayerOffTime)
 
 	if header.Version > 1 && header.ParamSize > 0 && header.ParamOffset > 0 {
 		var param cbddlpParam
@@ -445,13 +451,13 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		bot.Count = int(param.BottomLayerCount)
 		bot.Exposure.LiftHeight = param.BottomLiftHeight
 		bot.Exposure.LiftSpeed = param.BottomLiftSpeed
-		bot.Exposure.LightOffTime = time.Duration(param.BottomLightOffTime*1000) * time.Millisecond
+		bot.Exposure.LightOffTime = float32ToDuration(param.BottomLightOffTime)
 		bot.Exposure.RetractSpeed = param.RetractSpeed
 		bot.Exposure.RetractHeight = defaultRetractHeight
 
 		exp.LiftHeight = param.LiftHeight
 		exp.LiftSpeed = param.LiftSpeed
-		exp.LightOffTime = time.Duration(param.LightOffTime*1000) * time.Millisecond
+		exp.LightOffTime = float32ToDuration(param.LightOffTime)
 		exp.RetractSpeed = param.RetractSpeed
 		exp.RetractHeight = defaultRetractHeight
 	} else {
@@ -496,36 +502,34 @@ func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
 
 	layerDef := cbd.layerDef[index]
 
-	var exposure *uv3dp.Exposure
-	if index < cbd.properties.Bottom.Count {
-		exposure = &cbd.properties.Bottom.Exposure
-	} else {
-		exposure = &cbd.properties.Exposure
-	}
-
 	// Update per-layer info
-	lightExposure := time.Duration(layerDef.LayerExposure*1000) * time.Millisecond
-	lightOffTime := time.Duration(layerDef.LayerOffTime*1000) * time.Millisecond
-
-	if lightExposure != exposure.LightExposure || lightOffTime != exposure.LightOffTime {
-		exp := &uv3dp.Exposure{}
-		*exp = *exposure
-		exp.LightExposure = lightExposure
-		exp.LightOffTime = lightOffTime
-		exposure = exp
-	}
-
-	size := &cbd.properties.Size
+	prop := &cbd.properties
+	size := &prop.Size
 	bounds := image.Rect(0, 0, size.X, size.Y)
 	layerImage, err := rleDecodeBitmap(bounds, cbd.rleMap[layerDef.ImageOffset])
 	if err != nil {
 		panic(err)
 	}
 
+	var exposure uv3dp.Exposure
+	if index < prop.Bottom.Count {
+		exposure = prop.Bottom.Exposure
+	} else {
+		exposure = prop.Exposure
+	}
+
+	if layerDef.LayerExposure > 0.0 {
+		exposure.LightExposure = float32ToDuration(layerDef.LayerExposure)
+	}
+
+	if layerDef.LayerOffTime > 0.0 {
+		exposure.LightOffTime = float32ToDuration(layerDef.LayerOffTime)
+	}
+
 	layer = uv3dp.Layer{
 		Z:        layerDef.LayerHeight,
 		Image:    layerImage,
-		Exposure: exposure,
+		Exposure: &exposure,
 	}
 
 	return
