@@ -62,7 +62,7 @@ func (bc *BedCommand) PrintDefaults() {
 	fmt.Fprintln(os.Stderr)
 
 	keys := []string{}
-	for key, _ := range machineMap {
+	for key := range machineMap {
 		keys = append(keys, key)
 	}
 

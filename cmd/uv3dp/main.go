@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/ezrec/uv3dp"
 	_ "github.com/ezrec/uv3dp/cbddlp"
@@ -82,11 +83,22 @@ func Usage() {
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintf(os.Stderr, "  %-20s %s\n", "(none)", "Translates input file to output file")
 
-	for key, item := range commandMap {
+	commands := make(sort.StringSlice, len(commandMap))
+	n := 0
+	for key := range commandMap {
+		commands[n] = key
+		n++
+	}
+
+	commands.Sort()
+
+	for _, key := range commands {
+		item := commandMap[key]
 		fmt.Fprintf(os.Stderr, "  %-20s %s\n", key, item.Description)
 	}
 
-	for key, item := range commandMap {
+	for _, key := range commands {
+		item := commandMap[key]
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintf(os.Stderr, "Options for '%s':\n", key)
 		fmt.Fprintln(os.Stderr)

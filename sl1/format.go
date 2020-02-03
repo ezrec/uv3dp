@@ -194,7 +194,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	}
 
 	attrs := []string{}
-	for attr, _ := range config_ini {
+	for attr := range config_ini {
 		attrs = append(attrs, attr)
 	}
 	sort.Strings(attrs)
