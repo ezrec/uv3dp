@@ -25,7 +25,7 @@ func (cp *CachedPrintable) Layer(index int) (layer Layer) {
 
 	if !found {
 		if len(cp.layerCache) >= cp.cacheDepth {
-			for key, _ := range cp.layerCache {
+			for key := range cp.layerCache {
 				delete(cp.layerCache, key)
 				break
 			}

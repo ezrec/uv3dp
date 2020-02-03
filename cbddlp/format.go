@@ -339,7 +339,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 
 	// Sort the file data
 	fileIndex := []int{}
-	for key, _ := range fileData {
+	for key := range fileData {
 		fileIndex = append(fileIndex, key)
 	}
 
