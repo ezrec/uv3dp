@@ -75,11 +75,13 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for '*.cbddlp':
     
-          --version uint32   Override header Version (default 2)
+      -a, --anti-alias int   Override antialias level (1,2,4,8) (default 4)
+      -v, --version int      Override header Version (default 2)
     
     Options for '*.photon':
     
-          --version uint32   Override header Version (default 1)
+      -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
+      -v, --version int      Override header Version (default 1)
     
     Options for '*.sl1':
     

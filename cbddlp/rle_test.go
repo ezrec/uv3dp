@@ -24,7 +24,7 @@ func TestDecodeBinary(t *testing.T) {
 	rect := image.Rect(0, 0, 8, 2)
 
 	var gm *image.Gray
-	gm, err := rleDecodeBitmap(rect, in_rle[:])
+	gm, err := rleDecodeBitmaps(rect, []([]byte){in_rle})
 	if err != nil {
 		t.Fatalf("expected nil, got %v", err)
 	}
@@ -92,7 +92,7 @@ func TestEncodeBinary(t *testing.T) {
 	out_hash := uint64(0x2b7a251cf0df82f0)
 	out_bits := uint(146)
 
-	rle, hash, bits := rleEncodeBitmap(gray)
+	rle, hash, bits := rleEncodeBitmap(gray, 0, 1)
 
 	if bits != out_bits {
 		t.Errorf("expected %v, got %v", out_bits, bits)
@@ -118,7 +118,7 @@ func TestEncodeBinary(t *testing.T) {
 	gray.Stride = rect.Size().X
 	gray.Pix = make([]byte, rect.Size().X*rect.Size().Y)
 
-	rle, hash, bits = rleEncodeBitmap(gray)
+	rle, hash, bits = rleEncodeBitmap(gray, 0, 1)
 
 	out_rle = []byte{0x7d, 0x7d, 0x7d, 0x7d, 0x08}
 	out_hash = uint64(0x174c6ac17d4207cf)

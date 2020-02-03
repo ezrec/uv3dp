@@ -27,10 +27,10 @@ func (empty *EmptyPrintable) Properties() (prop Properties) {
 }
 
 func (empty *EmptyPrintable) Layer(index int) (layer Layer) {
-	prop := &empty.properties
+	prop := empty.Properties()
 
 	layer.Z = prop.Size.LayerHeight * float32(index)
-	layer.Image = image.NewGray(empty.properties.Bounds())
+	layer.Image = image.NewGray(prop.Bounds())
 
 	if index < prop.Bottom.Count {
 		layer.Exposure = &prop.Bottom.Exposure

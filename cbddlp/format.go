@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image"
 	"io/ioutil"
+	"math"
 	"sort"
 	"time"
 
@@ -102,7 +103,7 @@ type CbdDlp struct {
 	properties uv3dp.Properties
 	layerDef   []cbddlpLayerDef
 
-	rleMap map[uint32]([]byte)
+	rleMap map[uint32]([]([]byte))
 
 	layerCache map[int]uv3dp.Layer
 }
@@ -113,7 +114,7 @@ func align4(in uint32) (out uint32) {
 }
 
 func float32ToDuration(time_s float32) time.Duration {
-	return time.Duration(float64(time_s) * float64(time.Second))
+	return time.Duration(math.Round(float64(time_s) * float64(time.Second)))
 }
 
 func durationToFloat32(time_ns time.Duration) float32 {
@@ -123,36 +124,59 @@ func durationToFloat32(time_ns time.Duration) float32 {
 type CbddlpFormatter struct {
 	*pflag.FlagSet
 
-	Version uint32 // Version of file to use, one of [1,2]
+	Version   int // Version of file to use, one of [1,2]
+	AntiAlias int // AntiAlias level, one of [1,2,4,8]
 }
 
 func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
-	var version uint32
+	var version int
+	var antialias int
 
 	switch suffix {
 	case ".cbddlp":
 		version = 2
+		antialias = 4
 	case ".photon":
 		version = 1
+		antialias = 1
 	default:
 		version = 1
+		antialias = 1
 	}
 
 	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
 	flagSet.SetInterspersed(false)
 
 	cf = &CbddlpFormatter{
-		FlagSet: flagSet,
-		Version: version,
+		FlagSet:   flagSet,
+		Version:   version,
+		AntiAlias: antialias,
 	}
 
-	cf.Uint32Var(&cf.Version, "version", version, "Override header Version")
+	cf.IntVarP(&cf.Version, "version", "v", version, "Override header Version")
+	cf.IntVarP(&cf.AntiAlias, "anti-alias", "a", antialias, "Override antialias level (1,2,4,8)")
 
 	return
 }
 
 // Save a uv3dp.Printable in CBD DLP format
 func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
+	switch cf.Version {
+	case 1:
+		if cf.AntiAlias != 1 {
+			err = fmt.Errorf("illegal --anti-alias setting: must be '1' for Version 1 files")
+			return
+		}
+	case 2:
+		if cf.AntiAlias != 1 && cf.AntiAlias != 2 && cf.AntiAlias != 4 && cf.AntiAlias != 8 {
+			err = fmt.Errorf("illegal --anti-alias setting: %v (must be one of 1,2,4, or 8 bits)", cf.AntiAlias)
+			return
+		}
+	default:
+		err = fmt.Errorf("illegal version: %v", cf.Version)
+		return
+	}
+
 	properties := p.Properties()
 
 	size := &properties.Size
@@ -165,12 +189,11 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		rle    []byte
 	}
 	rleHash := map[uint64]rleInfo{}
-	layerHash := make([]uint64, size.Layers)
 
 	headerBase := uint32(0)
 	header := cbddlpHeader{
 		Magic:   defaultHeaderMagic,
-		Version: cf.Version,
+		Version: uint32(cf.Version),
 	}
 	headerSize, _ := restruct.SizeOf(&header)
 
@@ -225,31 +248,33 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		layerDefBase = paramBase
 	}
 
-	layerDef := make([]cbddlpLayerDef, size.Layers)
+	layerDef := make([]cbddlpLayerDef, size.Layers*cf.AntiAlias)
 	layerDefSize, _ := restruct.SizeOf(&layerDef[0])
 
 	// And then all the layer images
-	imageBase := layerDefBase + uint32(layerDefSize*size.Layers)
+	layerPage := uint32(layerDefSize * size.Layers)
+	imageBase := layerDefBase + layerPage*uint32(cf.AntiAlias)
 	totalOn := uint64(0)
 
 	for n := 0; n < size.Layers; n++ {
 		layer := p.Layer(n)
-		rle, hash, bitsOn := rleEncodeBitmap(layer.Image)
-		totalOn += uint64(bitsOn)
-		_, ok := rleHash[hash]
-		if !ok {
-			rleHash[hash] = rleInfo{offset: imageBase, rle: rle}
-			rleHashList = append(rleHashList, hash)
-			imageBase = align4(imageBase + uint32(len(rle)))
-		}
+		for bit := 0; bit < cf.AntiAlias; bit++ {
+			rle, hash, bitsOn := rleEncodeBitmap(layer.Image, bit, cf.AntiAlias)
+			totalOn += uint64(bitsOn)
+			_, ok := rleHash[hash]
+			if !ok {
+				rleHash[hash] = rleInfo{offset: imageBase, rle: rle}
+				rleHashList = append(rleHashList, hash)
+				imageBase = align4(imageBase + uint32(len(rle)))
+			}
 
-		layerHash[n] = hash
-		layerDef[n] = cbddlpLayerDef{
-			LayerHeight:   layer.Z,
-			LayerExposure: durationToFloat32(layer.Exposure.LightExposure),
-			LayerOffTime:  durationToFloat32(layer.Exposure.LightOffTime),
-			ImageOffset:   rleHash[hash].offset,
-			ImageLength:   uint32(len(rle)),
+			layerDef[n+bit*size.Layers] = cbddlpLayerDef{
+				LayerHeight:   layer.Z,
+				LayerExposure: durationToFloat32(layer.Exposure.LightExposure),
+				LayerOffTime:  durationToFloat32(layer.Exposure.LightOffTime),
+				ImageOffset:   rleHash[hash].offset,
+				ImageLength:   uint32(len(rle)),
+			}
 		}
 	}
 
@@ -274,7 +299,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	if header.Version >= 2 {
 		header.ParamOffset = paramBase
 		header.ParamSize = uint32(paramSize)
-		header.AntiAliasLevel = 0
+		header.AntiAliasLevel = uint32(cf.AntiAlias)
 		header.LightPWM = 255
 		header.BottomLightPWM = 255
 	}
@@ -380,6 +405,10 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		return
 	}
 
+	if header.AntiAliasLevel == 0 {
+		header.AntiAliasLevel = 1
+	}
+
 	if header.Magic != defaultHeaderMagic {
 		err = fmt.Errorf("Unknown header magic: 0x%08x", header.Magic)
 		return
@@ -419,11 +448,14 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 	}
 
 	// Collect layers
-	rleMap := make(map[uint32]([]byte))
+	rleMap := make(map[uint32]([]([]byte)))
 
 	layerDef := make([]cbddlpLayerDef, header.LayerCount)
+
+	layerDefSize := uint32(9 * 4)
+	layerDefPage := layerDefSize * header.LayerCount
 	for n := uint32(0); n < header.LayerCount; n++ {
-		offset := header.LayerDefs + (9*4)*n
+		offset := header.LayerDefs + layerDefSize*n
 		err = restruct.Unpack(data[offset:], binary.LittleEndian, &layerDef[n])
 		if err != nil {
 			return
@@ -432,7 +464,22 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		addr := layerDef[n].ImageOffset
 		size := layerDef[n].ImageLength
 
-		rleMap[addr] = data[addr : addr+size]
+		rleMap[addr] = []([]byte){data[addr : addr+size]}
+
+		// Collect the remaining anti-alias layer RLEs
+		for i := 1; i < int(header.AntiAliasLevel); i++ {
+			offset += layerDefPage
+			var layerTmp cbddlpLayerDef
+			err = restruct.Unpack(data[offset:], binary.LittleEndian, &layerTmp)
+			if err != nil {
+				return
+			}
+
+			naddr := layerTmp.ImageOffset
+			nsize := layerTmp.ImageLength
+
+			rleMap[addr] = append(rleMap[addr], data[naddr:naddr+nsize])
+		}
 	}
 
 	size := &prop.Size
@@ -519,7 +566,7 @@ func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
 	prop := &cbd.properties
 	size := &prop.Size
 	bounds := image.Rect(0, 0, size.X, size.Y)
-	layerImage, err := rleDecodeBitmap(bounds, cbd.rleMap[layerDef.ImageOffset])
+	layerImage, err := rleDecodeBitmaps(bounds, cbd.rleMap[layerDef.ImageOffset])
 	if err != nil {
 		panic(err)
 	}
