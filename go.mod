@@ -1,6 +1,6 @@
 module github.com/ezrec/uv3dp
 
-go 1.12
+go 1.13
 
 require (
 	github.com/go-restruct/restruct v0.0.0-20191227155143-5734170a48a1

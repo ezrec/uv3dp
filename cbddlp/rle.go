@@ -29,7 +29,7 @@ func hash64(data []byte) (hash uint64) {
 	return
 }
 
-func rleEncodeBitmap(bm image.Image) (rle []byte, hash uint64, bitsOn uint) {
+func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bitsOn uint) {
 	base := bm.Bounds().Min
 	size := bm.Bounds().Size()
 
@@ -44,40 +44,37 @@ func rleEncodeBitmap(bm image.Image) (rle []byte, hash uint64, bitsOn uint) {
 		}
 	}
 
-	bit := false
+	obit := false
 	rep := 0
 	for y := 0; y < size.Y; y++ {
 		for x := 0; x < size.X; x++ {
 			c := bm.At(base.X+x, base.Y+y)
 			r, g, b, _ := c.RGBA()
-			nbit := (r | g | b) >= 0x8000
-			if nbit == bit {
+			ngrey := uint16(r | g | b)
+			nbit := (ngrey & (1 << ((16 - bits) + bit))) != 0
+			if nbit == obit {
 				rep++
 				if rep == rle8EncodingLimit {
-					addRep(bit, rep)
+					addRep(obit, rep)
 					rep = 0
 				}
 			} else {
-				addRep(bit, rep)
-				bit = nbit
+				addRep(obit, rep)
+				obit = nbit
 				rep = 1
 			}
 		}
 	}
 
 	// Collect stragglers
-	addRep(bit, rep)
+	addRep(obit, rep)
 
 	hash = hash64(rle)
 
 	return
 }
 
-func rleDecodeBitmap(bounds image.Rectangle, rle []byte) (gm *image.Gray, err error) {
-	size := bounds.Size()
-
-	// Cleared to all zeros initially
-	pix := make([]uint8, size.X*size.Y)
+func rleDecodeInto(pix []uint8, rle []byte, bitValue uint8) (err error) {
 	var index int
 	var b byte
 
@@ -90,20 +87,48 @@ func rleDecodeBitmap(bounds image.Rectangle, rle []byte) (gm *image.Gray, err er
 		// High bit is on for white, off for black
 		if (b & 0x80) != 0 {
 			for i := 0; i < reps; i++ {
-				pix[n+i] = 0xff
+				pix[n+i] |= bitValue
 			}
 		}
 		n += reps
 	}
 
 	if index != len(rle)-1 {
-		panic(fmt.Sprintf("What? Bytes left: %d", len(rle)-index-1))
+		err = fmt.Errorf("What? Bytes left: %d", len(rle)-index-1)
+		return
 	}
 
+	return
+}
+
+func rleDecodeBitmaps(bounds image.Rectangle, rleSet []([]byte)) (gm *image.Gray, err error) {
+	bits := len(rleSet)
+
+	switch bits {
+	case 1:
+	case 2:
+	case 4:
+	case 8:
+	default:
+		err = fmt.Errorf("Invalid Anti-Alias image set: %d bits", bits)
+		return
+	}
+
+	pixSize := bounds.Size().X * bounds.Size().Y
+
 	gm = &image.Gray{
-		Pix:    pix,
+		Pix:    make([]uint8, pixSize),
 		Stride: bounds.Size().X,
 		Rect:   bounds,
+	}
+
+	for bit, rle := range rleSet {
+		bitValue := uint8((255 / ((1 << bits) - 1)) * (1 << bit))
+		fmt.Printf("%v, %#v\n", bit, bitValue)
+		err = rleDecodeInto(gm.Pix, rle, bitValue)
+		if err != nil {
+			return
+		}
 	}
 
 	return
