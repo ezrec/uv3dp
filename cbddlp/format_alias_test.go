@@ -51,7 +51,7 @@ var (
 			LayerHeight: 0.05,
 		},
 		Exposure: uv3dp.Exposure{
-			LightExposure: time.Nanosecond,
+			LightOnTime:   time.Nanosecond,
 			LightOffTime:  time.Nanosecond,
 			LiftHeight:    1.0,
 			LiftSpeed:     1.0,
@@ -61,7 +61,7 @@ var (
 		Bottom: uv3dp.Bottom{
 			Count: 1,
 			Exposure: uv3dp.Exposure{
-				LightExposure: time.Nanosecond,
+				LightOnTime:   time.Nanosecond,
 				LightOffTime:  time.Nanosecond,
 				LiftHeight:    1.0,
 				LiftSpeed:     1.0,

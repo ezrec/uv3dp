@@ -107,6 +107,9 @@ func Usage() {
 	}
 
 	uv3dp.FormatterUsage()
+
+	PrintMachines()
+	PrintResins()
 }
 
 func init() {

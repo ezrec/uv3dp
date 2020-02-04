@@ -59,8 +59,8 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 		}
 
 		fmt.Printf("Exposure: %v on, %v off nominal, %v bottom (%v %v layers)\n",
-			exp.LightExposure, exp.LightOffTime,
-			bot.Exposure.LightExposure,
+			exp.LightOnTime, exp.LightOffTime,
+			bot.Exposure.LightOnTime,
 			bot.Count, bottomStyle)
 	}
 

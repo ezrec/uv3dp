@@ -270,7 +270,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 
 			layerDef[n+bit*size.Layers] = cbddlpLayerDef{
 				LayerHeight:   layer.Z,
-				LayerExposure: durationToFloat32(layer.Exposure.LightExposure),
+				LayerExposure: durationToFloat32(layer.Exposure.LightOnTime),
 				LayerOffTime:  durationToFloat32(layer.Exposure.LightOffTime),
 				ImageOffset:   rleHash[hash].offset,
 				ImageLength:   uint32(len(rle)),
@@ -283,8 +283,8 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	header.BedSizeMM[1] = size.Millimeter.Y
 	header.BedSizeMM[2] = forceBedSizeMM_3
 	header.LayerHeight = size.LayerHeight
-	header.LayerExposure = durationToFloat32(exp.LightExposure)
-	header.BottomExposure = durationToFloat32(bot.Exposure.LightExposure)
+	header.LayerExposure = durationToFloat32(exp.LightOnTime)
+	header.BottomExposure = durationToFloat32(bot.Exposure.LightOnTime)
 	header.LayerOffTime = durationToFloat32(exp.LightOffTime)
 	header.BottomCount = uint32(bot.Count)
 	header.ResolutionX = uint32(size.X)
@@ -493,12 +493,12 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 	size.LayerHeight = header.LayerHeight
 
 	exp := &prop.Exposure
-	exp.LightExposure = float32ToDuration(header.LayerExposure)
+	exp.LightOnTime = float32ToDuration(header.LayerExposure)
 	exp.LightOffTime = float32ToDuration(header.LayerOffTime)
 
 	bot := &prop.Bottom
 	bot.Count = int(header.BottomCount)
-	bot.Exposure.LightExposure = float32ToDuration(header.BottomExposure)
+	bot.Exposure.LightOnTime = float32ToDuration(header.BottomExposure)
 	bot.Exposure.LightOffTime = float32ToDuration(header.LayerOffTime)
 
 	if header.Version > 1 && header.ParamSize > 0 && header.ParamOffset > 0 {
@@ -579,7 +579,7 @@ func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
 	}
 
 	if layerDef.LayerExposure > 0.0 {
-		exposure.LightExposure = float32ToDuration(layerDef.LayerExposure)
+		exposure.LightOnTime = float32ToDuration(layerDef.LayerExposure)
 	}
 
 	if layerDef.LayerOffTime > 0.0 {

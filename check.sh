@@ -39,7 +39,8 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
 ### Command summary:
 EOF
 
-go run github.com/ezrec/uv3dp/cmd/uv3dp 2>&1 | sed -e 's|^|    |' >>README.md
+go run github.com/ezrec/uv3dp/cmd/uv3dp 2>&1 | sed -e 's|^|    |' \
+    -e 's|/home/jmcmullan/.config/ChiTuBox/machine/0.cfg|local user ChiTuBox config|' >>README.md
 echo "=== README.md updated"
 
 echo "=== CHECKED"

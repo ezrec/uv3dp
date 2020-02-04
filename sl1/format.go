@@ -171,8 +171,8 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	config_ini := map[string]string{
 		"action":                "print",
 		"jobDir":                "uv3dp",
-		"expTime":               fmt.Sprintf("%.3g", float64(exp.LightExposure)/float64(time.Second)),
-		"expTimeFirst":          fmt.Sprintf("%.3g", float64(bot.LightExposure)/float64(time.Second)),
+		"expTime":               fmt.Sprintf("%.3g", float64(exp.LightOnTime)/float64(time.Second)),
+		"expTimeFirst":          fmt.Sprintf("%.3g", float64(bot.LightOnTime)/float64(time.Second)),
 		"fileCreationTimestamp": sl1Timestamp(),
 		"layerHeight":           layerHeight,
 		"materialName":          materialName,
@@ -342,7 +342,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	size.LayerHeight = config.layerHeight
 
 	bot := &prop.Bottom
-	bot.Exposure.LightExposure = time.Duration(config.expTimeFirst*1000) * time.Millisecond
+	bot.Exposure.LightOnTime = time.Duration(config.expTimeFirst*1000) * time.Millisecond
 
 	if config.numFade > 0 {
 		bot.Count = int(config.numFade)
@@ -353,7 +353,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	}
 
 	exp := &prop.Exposure
-	exp.LightExposure = time.Duration(config.expTime*1000) * time.Millisecond
+	exp.LightOnTime = time.Duration(config.expTime*1000) * time.Millisecond
 
 	// Calculate layer off time based off of total print time
 	bottomExposure := config.expTimeFirst * float32(config.numFade)

@@ -5,10 +5,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"sort"
-
 	"github.com/spf13/pflag"
 
 	"github.com/ezrec/uv3dp"
@@ -37,27 +33,6 @@ func NewEmptyFormatter() (ef *EmptyFormatter) {
 	ef.SetInterspersed(false)
 
 	return
-}
-
-func (ef *EmptyFormatter) PrintDefaults() {
-	ef.FlagSet.PrintDefaults()
-
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "  Machines:")
-	fmt.Fprintln(os.Stderr)
-
-	keys := []string{}
-	for key := range MachineMap {
-		keys = append(keys, key)
-	}
-
-	sort.Strings(keys)
-
-	for _, key := range keys {
-		item := MachineMap[key]
-		size := &item.Size
-		fmt.Fprintf(os.Stderr, "    %-20s %dx%d, %.3gx%.3g mm\n", key, size.X, size.Y, size.Xmm, size.Ymm)
-	}
 }
 
 func (ef *EmptyFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {

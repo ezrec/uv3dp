@@ -48,25 +48,16 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -m, --millimeters float32Slice   Bed size, in millimeters (default [68.040001,120.959999])
       -p, --pixels ints                Bed size, in pixels (default [1440,2560])
     
-      Machines:
-    
-        Anycubic-Photon      1440x2560, 68x121 mm
-        EPAX-X1              1440x2560, 68x121 mm
-        EPAX-X10             1600x2560, 135x216 mm
-        EPAX-X133            2160x3840, 165x293 mm
-        EPAX-X156            2160x3840, 194x345 mm
-        EPAX-X9              1600x2560, 120x192 mm
-        Elogoo-Mars          1440x2560, 68x121 mm
-    
     Options for 'decimate':
     
     
     Options for 'exposure':
     
-      -c, --bottom-count uint          Bottom layer count
+      -c, --bottom-count int           Bottom layer count
       -b, --bottom-exposure duration   Bottom layer light-on time
       -s, --bottom-style string        Bottom layer style - 'fade' or 'slow' (default "slow")
       -e, --exposure duration          Normal layer light-on time
+      -r, --resin string               Resin type [see 'Known resins' in help]
     
     Options for 'info':
     
@@ -94,7 +85,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -m, --millimeters float32Slice   Empty size, in millimeters (default [68.040001,120.959999])
       -p, --pixels ints                Empty size, in pixels (default [1440,2560])
     
-      Machines:
+    Known machines:
     
         Anycubic-Photon      1440x2560, 68x121 mm
         EPAX-X1              1440x2560, 68x121 mm
@@ -103,3 +94,11 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         EPAX-X156            2160x3840, 194x345 mm
         EPAX-X9              1600x2560, 120x192 mm
         Elogoo-Mars          1440x2560, 68x121 mm
+    
+    Known resins: (from local user ChiTuBox config)
+    
+        Anycubic Gray                            bottom 5 slow layers, 1m0s; nominal 22s
+        Geeetech Washable Crystal                bottom 5 slow layers, 1m0s; nominal 14s
+        Siraya Blue + Anycubic Grey              bottom 5 slow layers, 1m0s; nominal 26s
+        Siraya Tech Fast Grey                    bottom 5 slow layers, 1m0s; nominal 14s
+        Tech Gray 2                              bottom 8 slow layers, 1m0s; nominal 14s
