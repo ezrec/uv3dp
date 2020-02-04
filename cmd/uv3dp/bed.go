@@ -16,22 +16,6 @@ import (
 	"github.com/ezrec/uv3dp"
 )
 
-// Predefined bed layouts
-var (
-	machineMap = map[string]struct {
-		X, Y     int
-		Xmm, Ymm float32
-	}{
-		"Anycubic-Photon": {1440, 2560, 68.04, 120.96},
-		"Elogoo-Mars":     {1440, 2560, 68.04, 120.96},
-		"EPAX-X1":         {1440, 2560, 68.04, 120.96},
-		"EPAX-X9":         {1600, 2560, 120.0, 192.0},
-		"EPAX-X10":        {1600, 2560, 135.0, 216.0},
-		"EPAX-X133":       {2160, 3840, 165.0, 293.0},
-		"EPAX-X156":       {2160, 3840, 194.0, 345.0},
-	}
-)
-
 type BedCommand struct {
 	*pflag.FlagSet
 
@@ -62,15 +46,16 @@ func (bc *BedCommand) PrintDefaults() {
 	fmt.Fprintln(os.Stderr)
 
 	keys := []string{}
-	for key := range machineMap {
+	for key := range MachineMap {
 		keys = append(keys, key)
 	}
 
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		item := machineMap[key]
-		fmt.Fprintf(os.Stderr, "    %-20s %dx%d, %.3gx%.3g mm\n", key, item.X, item.Y, item.Xmm, item.Ymm)
+		item := MachineMap[key]
+		size := &item.Size
+		fmt.Fprintf(os.Stderr, "    %-20s %dx%d, %.3gx%.3g mm\n", key, size.X, size.Y, size.Xmm, size.Ymm)
 	}
 }
 
@@ -79,7 +64,7 @@ func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err
 	dstSize := srcSize
 
 	if bc.Changed("machine") {
-		size := machineMap[bc.Machine]
+		size := MachineMap[bc.Machine].Size
 		dstSize.X = size.X
 		dstSize.Y = size.Y
 		dstSize.Millimeter.X = size.Xmm
