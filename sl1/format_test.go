@@ -47,7 +47,7 @@ var (
 			LayerHeight: 0.05,
 		},
 		Exposure: uv3dp.Exposure{
-			LightExposure: time.Millisecond * 16500,
+			LightOnTime:   time.Millisecond * 16500,
 			LightOffTime:  time.Millisecond * 2250,
 			LiftHeight:    5.5,
 			LiftSpeed:     120.0,
@@ -58,7 +58,7 @@ var (
 			Count: 2,
 			Style: uv3dp.BottomStyleFade,
 			Exposure: uv3dp.Exposure{
-				LightExposure: time.Millisecond * 16500,
+				LightOnTime:   time.Millisecond * 16500,
 				LightOffTime:  time.Millisecond * 2250,
 				LiftHeight:    5.5,
 				LiftSpeed:     120.0,

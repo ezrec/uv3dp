@@ -23,7 +23,7 @@ type Size struct {
 
 // Per-layer exposure
 type Exposure struct {
-	LightExposure time.Duration // Exposure time
+	LightOnTime   time.Duration // Exposure time
 	LightOffTime  time.Duration // Cool down time
 	LiftHeight    float32       // mm
 	LiftSpeed     float32       // mm/sec
@@ -33,7 +33,7 @@ type Exposure struct {
 
 // Total duration of an exposure
 func (exp *Exposure) Duration() (total time.Duration) {
-	total = exp.LightExposure + exp.LightOffTime
+	total = exp.LightOnTime + exp.LightOffTime
 
 	// Motion is lift; then retract -> move back to start at retract speed
 	total += time.Duration(exp.LiftHeight / exp.LiftSpeed * float32(time.Second))
@@ -43,7 +43,7 @@ func (exp *Exposure) Duration() (total time.Duration) {
 
 // Interpolate scales settings between this and another Exposure
 func (exp *Exposure) Interpolate(target Exposure, scale float32) (result Exposure) {
-	result.LightExposure = exp.LightExposure + time.Duration(float64(target.LightExposure-exp.LightExposure)*float64(scale))
+	result.LightOnTime = exp.LightOnTime + time.Duration(float64(target.LightOnTime-exp.LightOnTime)*float64(scale))
 	result.LightOffTime = exp.LightOffTime + time.Duration(float64(target.LightOffTime-exp.LightOffTime)*float64(scale))
 	result.LiftHeight = exp.LiftHeight + (target.LiftHeight-exp.LiftHeight)*scale
 	result.LiftSpeed = exp.LiftSpeed + (target.LiftSpeed-exp.LiftSpeed)*scale
@@ -60,6 +60,17 @@ const (
 	BottomStyleSlow = BottomStyle(iota) // Abruptly transition from slow to normal exposure
 	BottomStyleFade                     // Gradually transition for slow to normal layers
 )
+
+func (bs BottomStyle) String() string {
+	switch bs {
+	case BottomStyleSlow:
+		return "slow"
+	case BottomStyleFade:
+		return "fade"
+	default:
+		return "unknown"
+	}
+}
 
 // Bottom layer exposure
 type Bottom struct {

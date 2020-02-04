@@ -4,6 +4,12 @@
 
 package main
 
+import (
+	"fmt"
+	"os"
+	"sort"
+)
+
 type MachineSize struct {
 	X, Y     int
 	Xmm, Ymm float32
@@ -25,3 +31,22 @@ var (
 		"EPAX-X156":       {Size: MachineSize{2160, 3840, 194.0, 345.0}},
 	}
 )
+
+func PrintMachines() {
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Known machines:")
+	fmt.Fprintln(os.Stderr)
+
+	keys := []string{}
+	for key := range MachineMap {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		item := MachineMap[key]
+		size := &item.Size
+		fmt.Fprintf(os.Stderr, "    %-20s %dx%d, %.3gx%.3g mm\n", key, size.X, size.Y, size.Xmm, size.Ymm)
+	}
+}

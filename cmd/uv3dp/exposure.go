@@ -16,11 +16,13 @@ import (
 type ExposureCommand struct {
 	*pflag.FlagSet
 
-	Exposure time.Duration // Time to expose a normal layer
+	ResinName string
 
-	BottomCount    uint // Number of bottom layers
-	BottomExposure time.Duration
-	BottomStyle    string // Style (either 'slow' or 'fade')
+	LightOnTime time.Duration
+
+	BottomStyle       string // Style (either 'slow' or 'fade')
+	BottomLightOnTime time.Duration
+	BottomCount       int
 }
 
 func NewExposureCommand() (ec *ExposureCommand) {
@@ -28,10 +30,14 @@ func NewExposureCommand() (ec *ExposureCommand) {
 		FlagSet: pflag.NewFlagSet("exposure", pflag.ContinueOnError),
 	}
 
-	ec.DurationVarP(&ec.Exposure, "exposure", "e", time.Duration(0), "Normal layer light-on time")
-	ec.UintVarP(&ec.BottomCount, "bottom-count", "c", 0, "Bottom layer count")
+	ec.StringVarP(&ec.ResinName, "resin", "r", "", "Resin type [see 'Known resins' in help]")
+
+	ec.DurationVarP(&ec.LightOnTime, "exposure", "e", time.Duration(0), "Normal layer light-on time")
+
+	ec.IntVarP(&ec.BottomCount, "bottom-count", "c", 0, "Bottom layer count")
 	ec.StringVarP(&ec.BottomStyle, "bottom-style", "s", "slow", "Bottom layer style - 'fade' or 'slow'")
-	ec.DurationVarP(&ec.BottomExposure, "bottom-exposure", "b", time.Duration(0), "Bottom layer light-on time")
+	ec.DurationVarP(&ec.BottomLightOnTime, "bottom-exposure", "b", time.Duration(0), "Bottom layer light-on time")
+
 	ec.SetInterspersed(false)
 
 	return
@@ -39,20 +45,25 @@ func NewExposureCommand() (ec *ExposureCommand) {
 
 type exposureModifier struct {
 	uv3dp.Printable
-	properties uv3dp.Properties
+	Resin
 }
 
 func (em *exposureModifier) Properties() (prop uv3dp.Properties) {
-	prop = em.properties
+	prop = em.Printable.Properties()
+
+	// Set the bottom and normal exposure from the resins
+	prop.Bottom = em.Resin.Bottom
+	prop.Exposure = em.Resin.Exposure
+
 	return
 }
 
 func (em *exposureModifier) Layer(index int) (layer uv3dp.Layer) {
 	layer = em.Printable.Layer(index)
 
-	exp := &em.properties.Exposure
-	bot := &em.properties.Bottom.Exposure
-	bottomCount := em.properties.Bottom.Count
+	exp := &em.Resin.Exposure
+	bot := &em.Resin.Bottom.Exposure
+	bottomCount := em.Resin.Bottom.Count
 
 	if index < bottomCount {
 		layer.Exposure = bot
@@ -64,19 +75,32 @@ func (em *exposureModifier) Layer(index int) (layer uv3dp.Layer) {
 }
 
 func (ec *ExposureCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	em := &exposureModifier{
-		Printable:  input,
-		properties: input.Properties(),
+	prop := input.Properties()
+
+	// Clone the resin defaults from the source printable
+	resin := &Resin{
+		Exposure: prop.Exposure,
+		Bottom:   prop.Bottom,
+	}
+
+	if ec.Changed("resin") {
+		var ok bool
+		resin, ok = ResinMap[ec.ResinName]
+		if !ok {
+			err = fmt.Errorf("unknown resin name \"%v\"", ec.ResinName)
+			return
+		}
+		TraceVerbosef(VerbosityNotice, "  Setting default resin to %v", resin.Name)
 	}
 
 	if ec.Changed("exposure") {
-		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", ec.Exposure)
-		em.properties.Exposure.LightExposure = ec.Exposure
+		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", ec.LightOnTime)
+		resin.Exposure.LightOnTime = ec.LightOnTime
 	}
 
 	if ec.Changed("bottom-count") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer count %v", ec.BottomCount)
-		em.properties.Bottom.Count = int(ec.BottomCount)
+		resin.Bottom.Count = int(ec.BottomCount)
 	}
 
 	if ec.Changed("bottom-style") {
@@ -89,12 +113,17 @@ func (ec *ExposureCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable
 		if !found {
 			panic(fmt.Sprintf("exposure: Invalid --bottom-style=%v", ec.BottomStyle))
 		}
-		em.properties.Bottom.Style = style
+		resin.Bottom.Style = style
 	}
 
 	if ec.Changed("bottom-exposure") {
-		TraceVerbosef(VerbosityNotice, "  Setting default bottom time to %v", ec.BottomExposure)
-		em.properties.Bottom.Exposure.LightExposure = ec.BottomExposure
+		TraceVerbosef(VerbosityNotice, "  Setting default bottom time to %v", ec.BottomLightOnTime)
+		resin.Bottom.Exposure.LightOnTime = ec.BottomLightOnTime
+	}
+
+	em := &exposureModifier{
+		Printable: input,
+		Resin:     *resin,
 	}
 
 	output = em
