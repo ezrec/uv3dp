@@ -74,16 +74,32 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -l, --layer      Show layer detail
       -s, --size       Show size summary (default true)
     
-    Options for '*.cbddlp':
+    Options for '.cbddlp':
     
       -a, --anti-alias int   Override antialias level (1,2,4,8) (default 4)
       -v, --version int      Override header Version (default 2)
     
-    Options for '*.photon':
+    Options for '.photon':
     
       -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
       -v, --version int      Override header Version (default 1)
     
-    Options for '*.sl1':
+    Options for '.sl1':
     
       -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
+    
+    Options for 'empty':
+    
+      -M, --machine string             Size preset by machine type (default "EPAX-X1")
+      -m, --millimeters float32Slice   Empty size, in millimeters (default [68.040001,120.959999])
+      -p, --pixels ints                Empty size, in pixels (default [1440,2560])
+    
+      Machines:
+    
+        Anycubic-Photon      1440x2560, 68x121 mm
+        EPAX-X1              1440x2560, 68x121 mm
+        EPAX-X10             1600x2560, 135x216 mm
+        EPAX-X133            2160x3840, 165x293 mm
+        EPAX-X156            2160x3840, 194x345 mm
+        EPAX-X9              1600x2560, 120x192 mm
+        Elogoo-Mars          1440x2560, 68x121 mm
