@@ -28,6 +28,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Usage:
     
       uv3dp [options] INFILE [command [options] | OUTFILE]...
+      uv3dp [options] @cmdfile.cmd
     
     Options:
     
