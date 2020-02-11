@@ -74,6 +74,7 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "Usage:")
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "  uv3dp [options] INFILE [command [options] | OUTFILE]...")
+	fmt.Fprintln(os.Stderr, "  uv3dp [options] @cmdfile.cmd")
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Options:")
 	fmt.Fprintln(os.Stderr)
@@ -178,10 +179,40 @@ func evaluate(args []string) (err error) {
 	return
 }
 
+func argExpand(in []string) (out []string, err error) {
+	for _, arg := range in {
+		if len(arg) > 1 && arg[0] == '@' {
+			var reader *os.File
+			reader, err = os.Open(arg[1:])
+			if err != nil {
+				return
+			}
+			defer reader.Close()
+
+			var more []string
+			more, err = CommandExpand(reader)
+			if err != nil {
+				return
+			}
+			out = append(out, more...)
+		} else {
+			out = append(out, arg)
+		}
+	}
+
+	return
+}
+
 func main() {
+	var err error
+	os.Args, err = argExpand(os.Args)
+	if err != nil {
+		panic(err)
+	}
+
 	pflag.Parse()
 
-	err := evaluate(pflag.Args())
+	err = evaluate(pflag.Args())
 	if err != nil {
 		panic(err)
 	}
