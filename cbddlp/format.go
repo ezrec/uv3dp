@@ -22,7 +22,6 @@ import (
 
 const (
 	defaultHeaderMagic = uint32(0x12fd0019)
-	defaultLayerCache  = 16
 
 	defaultBottomLiftHeight = 5.0
 	defaultBottomLiftSpeed  = 300.0
@@ -104,8 +103,6 @@ type CbdDlp struct {
 	layerDef   []cbddlpLayerDef
 
 	rleMap map[uint32]([]([]byte))
-
-	layerCache map[int]uv3dp.Layer
 }
 
 func align4(in uint32) (out uint32) {
@@ -539,7 +536,6 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		properties: prop,
 		layerDef:   layerDef,
 		rleMap:     rleMap,
-		layerCache: make(map[int]uv3dp.Layer, defaultLayerCache),
 	}
 
 	printable = cbd

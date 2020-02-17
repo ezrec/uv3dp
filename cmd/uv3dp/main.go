@@ -16,10 +16,6 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const (
-	defaultCachedLayers = 64
-)
-
 type Verbosity int
 
 const (
@@ -152,9 +148,6 @@ func evaluate(args []string) (err error) {
 				if err != nil {
 					return
 				}
-
-				// Cache layer decoding
-				input = uv3dp.NewCachedPrintable(input, defaultCachedLayers)
 			} else {
 				// Otherwise save the file
 				err = format.SetPrintable(input)
