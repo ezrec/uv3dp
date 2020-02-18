@@ -253,25 +253,52 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	imageBase := layerDefBase + layerPage*uint32(cf.AntiAlias)
 	totalOn := uint64(0)
 
+	type layerInfo struct {
+		Layer  *uv3dp.Layer
+		Rle    []byte
+		Hash   uint64
+		BitsOn uint
+	}
+
+	doneMap := make([]chan layerInfo, size.Layers)
+
 	for n := 0; n < size.Layers; n++ {
-		layer := p.Layer(n)
+		doneMap[n] = make(chan layerInfo, cf.AntiAlias)
+		go func(n int) {
+			layer := p.Layer(n)
+			for bit := 0; bit < cf.AntiAlias; bit++ {
+				rle, hash, bitsOn := rleEncodeBitmap(layer.Image, bit, cf.AntiAlias)
+				doneMap[n] <- layerInfo{
+					Layer:  &layer,
+					Rle:    rle,
+					Hash:   hash,
+					BitsOn: bitsOn,
+				}
+			}
+			close(doneMap[n])
+		}(n)
+	}
+
+	for n := 0; n < size.Layers; n++ {
 		for bit := 0; bit < cf.AntiAlias; bit++ {
-			rle, hash, bitsOn := rleEncodeBitmap(layer.Image, bit, cf.AntiAlias)
-			totalOn += uint64(bitsOn)
-			_, ok := rleHash[hash]
+			info := <-doneMap[n]
+			_, ok := rleHash[info.Hash]
 			if !ok {
-				rleHash[hash] = rleInfo{offset: imageBase, rle: rle}
-				rleHashList = append(rleHashList, hash)
-				imageBase = align4(imageBase + uint32(len(rle)))
+				rleHash[info.Hash] = rleInfo{offset: imageBase, rle: info.Rle}
+				rleHashList = append(rleHashList, info.Hash)
+				imageBase = align4(imageBase + uint32(len(info.Rle)))
 			}
 
+			layer := info.Layer
 			layerDef[n+bit*size.Layers] = cbddlpLayerDef{
 				LayerHeight:   layer.Z,
 				LayerExposure: durationToFloat32(layer.Exposure.LightOnTime),
 				LayerOffTime:  durationToFloat32(layer.Exposure.LightOffTime),
-				ImageOffset:   rleHash[hash].offset,
-				ImageLength:   uint32(len(rle)),
+				ImageOffset:   rleHash[info.Hash].offset,
+				ImageLength:   uint32(len(info.Rle)),
 			}
+
+			totalOn += uint64(info.BitsOn)
 		}
 	}
 
