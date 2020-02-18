@@ -15,7 +15,7 @@ import (
 
 const (
 	rle8EncodingLimit  = 125 // Yah, I know. Feels weird. But required.
-	rle16EncodingLimit = 0xfff
+	rle16EncodingLimit = 0x1000
 )
 
 var tab64 *crc64.Table
@@ -183,7 +183,7 @@ func rleEncodeRGB15(bm image.Image) (rle []byte, hash uint64) {
 				rep++
 				if rep == rle16EncodingLimit {
 					rle = append(rle, rleRGB15(color15, rep)...)
-					rep = 1
+					rep = 0
 				}
 			} else {
 				rle = append(rle, rleRGB15(color15, rep)...)
