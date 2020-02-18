@@ -18,11 +18,13 @@ type ExposureCommand struct {
 
 	ResinName string
 
-	LightOnTime time.Duration
+	LightOnTime  time.Duration
+	LightOffTime time.Duration
 
-	BottomStyle       string // Style (either 'slow' or 'fade')
-	BottomLightOnTime time.Duration
-	BottomCount       int
+	BottomStyle        string // Style (either 'slow' or 'fade')
+	BottomLightOnTime  time.Duration
+	BottomLightOffTime time.Duration
+	BottomCount        int
 }
 
 func NewExposureCommand() (ec *ExposureCommand) {
@@ -33,10 +35,12 @@ func NewExposureCommand() (ec *ExposureCommand) {
 	ec.StringVarP(&ec.ResinName, "resin", "r", "", "Resin type [see 'Known resins' in help]")
 
 	ec.DurationVarP(&ec.LightOnTime, "exposure", "e", time.Duration(0), "Normal layer light-on time")
+	ec.DurationVar(&ec.LightOffTime, "off-time", time.Duration(0), "Normal layer light-off time")
 
 	ec.IntVarP(&ec.BottomCount, "bottom-count", "c", 0, "Bottom layer count")
 	ec.StringVarP(&ec.BottomStyle, "bottom-style", "s", "slow", "Bottom layer style - 'fade' or 'slow'")
 	ec.DurationVarP(&ec.BottomLightOnTime, "bottom-exposure", "b", time.Duration(0), "Bottom layer light-on time")
+	ec.DurationVar(&ec.BottomLightOffTime, "bottom-off-time", time.Duration(0), "Bottom layer light-off time")
 
 	ec.SetInterspersed(false)
 
@@ -98,6 +102,11 @@ func (ec *ExposureCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable
 		resin.Exposure.LightOnTime = ec.LightOnTime
 	}
 
+	if ec.Changed("off-time") {
+		TraceVerbosef(VerbosityNotice, "  Setting default light off time to %v", ec.LightOffTime)
+		resin.Exposure.LightOffTime = ec.LightOffTime
+	}
+
 	if ec.Changed("bottom-count") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer count %v", ec.BottomCount)
 		resin.Bottom.Count = int(ec.BottomCount)
@@ -119,6 +128,11 @@ func (ec *ExposureCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable
 	if ec.Changed("bottom-exposure") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom time to %v", ec.BottomLightOnTime)
 		resin.Bottom.Exposure.LightOnTime = ec.BottomLightOnTime
+	}
+
+	if ec.Changed("bottom-off-time") {
+		TraceVerbosef(VerbosityNotice, "  Setting default bottom off time to %v", ec.BottomLightOffTime)
+		resin.Bottom.Exposure.LightOffTime = ec.BottomLightOffTime
 	}
 
 	em := &exposureModifier{

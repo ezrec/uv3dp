@@ -55,8 +55,10 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
       -c, --bottom-count int           Bottom layer count
       -b, --bottom-exposure duration   Bottom layer light-on time
+          --bottom-off-time duration   Bottom layer light-off time
       -s, --bottom-style string        Bottom layer style - 'fade' or 'slow' (default "slow")
       -e, --exposure duration          Normal layer light-on time
+          --off-time duration          Normal layer light-off time
       -r, --resin string               Resin type [see 'Known resins' in help]
     
     Options for 'info':
