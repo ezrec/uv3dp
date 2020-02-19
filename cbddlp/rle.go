@@ -124,7 +124,6 @@ func rleDecodeBitmaps(bounds image.Rectangle, rleSet []([]byte)) (gm *image.Gray
 
 	for bit, rle := range rleSet {
 		bitValue := uint8((255 / ((1 << bits) - 1)) * (1 << bit))
-		fmt.Printf("%v, %#v\n", bit, bitValue)
 		err = rleDecodeInto(gm.Pix, rle, bitValue)
 		if err != nil {
 			return
