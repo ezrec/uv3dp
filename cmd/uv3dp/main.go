@@ -64,6 +64,22 @@ var commandMap = map[string]struct {
 		NewCommander: func() Commander { return NewExposureCommand() },
 		Description:  "Alters exposure times",
 	},
+	"bottom": {
+		NewCommander: func() Commander { return NewBottomCommand() },
+		Description:  "Alters bottom layer exposure",
+	},
+	"lift": {
+		NewCommander: func() Commander { return NewLiftCommand() },
+		Description:  "Alters layer lift properties",
+	},
+	"retract": {
+		NewCommander: func() Commander { return NewRetractCommand() },
+		Description:  "Alters layer retract properties",
+	},
+	"resin": {
+		NewCommander: func() Commander { return NewResinCommand() },
+		Description:  "Changes all properties to match a selected resin",
+	},
 }
 
 func Usage() {

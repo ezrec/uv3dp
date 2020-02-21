@@ -337,19 +337,19 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		param.LiftSpeed = exp.LiftSpeed
 		param.RetractSpeed = exp.RetractSpeed
 
-		if param.BottomLiftSpeed == 0.0 {
+		if param.BottomLiftSpeed < 0 {
 			param.BottomLiftSpeed = defaultBottomLiftSpeed
 		}
-		if param.BottomLiftHeight == 0.0 {
+		if param.BottomLiftHeight < 0 {
 			param.BottomLiftHeight = defaultBottomLiftHeight
 		}
-		if param.LiftHeight == 0.0 {
+		if param.LiftHeight < 0 {
 			param.LiftHeight = defaultLiftHeight
 		}
-		if param.LiftSpeed == 0.0 {
+		if param.LiftSpeed < 0 {
 			param.LiftSpeed = defaultLiftSpeed
 		}
-		if param.RetractSpeed == 0.0 {
+		if param.RetractSpeed < 0 {
 			param.RetractSpeed = defaultRetractSpeed
 		}
 	}
