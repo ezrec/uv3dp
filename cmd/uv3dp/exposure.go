@@ -5,7 +5,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -16,131 +15,69 @@ import (
 type ExposureCommand struct {
 	*pflag.FlagSet
 
-	ResinName string
-
 	LightOnTime  time.Duration
 	LightOffTime time.Duration
-
-	BottomStyle        string // Style (either 'slow' or 'fade')
-	BottomLightOnTime  time.Duration
-	BottomLightOffTime time.Duration
-	BottomCount        int
 }
 
-func NewExposureCommand() (ec *ExposureCommand) {
-	ec = &ExposureCommand{
+func NewExposureCommand() (cmd *ExposureCommand) {
+	cmd = &ExposureCommand{
 		FlagSet: pflag.NewFlagSet("exposure", pflag.ContinueOnError),
 	}
 
-	ec.StringVarP(&ec.ResinName, "resin", "r", "", "Resin type [see 'Known resins' in help]")
+	cmd.DurationVarP(&cmd.LightOnTime, "light-on", "o", time.Duration(0), "Normal layer light-on time")
+	cmd.DurationVar(&cmd.LightOffTime, "light-off", time.Duration(0), "Normal layer light-off time")
 
-	ec.DurationVarP(&ec.LightOnTime, "exposure", "e", time.Duration(0), "Normal layer light-on time")
-	ec.DurationVar(&ec.LightOffTime, "off-time", time.Duration(0), "Normal layer light-off time")
-
-	ec.IntVarP(&ec.BottomCount, "bottom-count", "c", 0, "Bottom layer count")
-	ec.StringVarP(&ec.BottomStyle, "bottom-style", "s", "slow", "Bottom layer style - 'fade' or 'slow'")
-	ec.DurationVarP(&ec.BottomLightOnTime, "bottom-exposure", "b", time.Duration(0), "Bottom layer light-on time")
-	ec.DurationVar(&ec.BottomLightOffTime, "bottom-off-time", time.Duration(0), "Bottom layer light-off time")
-
-	ec.SetInterspersed(false)
+	cmd.SetInterspersed(false)
 
 	return
 }
 
 type exposureModifier struct {
 	uv3dp.Printable
-	Resin
+
+	Exposure    uv3dp.Exposure
+	BottomCount int
 }
 
-func (em *exposureModifier) Properties() (prop uv3dp.Properties) {
-	prop = em.Printable.Properties()
+func (mod *exposureModifier) Properties() (prop uv3dp.Properties) {
+	prop = mod.Printable.Properties()
 
-	// Set the bottom and normal exposure from the resins
-	prop.Bottom = em.Resin.Bottom
-	prop.Exposure = em.Resin.Exposure
+	// Set the normal exposure
+	prop.Exposure = mod.Exposure
 
 	return
 }
 
-func (em *exposureModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = em.Printable.Layer(index)
+func (mod *exposureModifier) Layer(index int) (layer uv3dp.Layer) {
+	layer = mod.Printable.Layer(index)
 
-	exp := &em.Resin.Exposure
-	bot := &em.Resin.Bottom.Exposure
-	bottomCount := em.Resin.Bottom.Count
-
-	if index < bottomCount {
-		layer.Exposure = bot
-	} else {
-		layer.Exposure = exp
+	if index >= mod.BottomCount {
+		layer.Exposure = &mod.Exposure
 	}
 
 	return
 }
 
-func (ec *ExposureCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
+func (cmd *ExposureCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err error) {
 	prop := input.Properties()
 
-	// Clone the resin defaults from the source printable
-	resin := &Resin{
-		Exposure: prop.Exposure,
-		Bottom:   prop.Bottom,
+	exp := prop.Exposure
+
+	if cmd.Changed("light-on") {
+		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", cmd.LightOnTime)
+		exp.LightOnTime = cmd.LightOnTime
 	}
 
-	if ec.Changed("resin") {
-		var ok bool
-		resin, ok = ResinMap[ec.ResinName]
-		if !ok {
-			err = fmt.Errorf("unknown resin name \"%v\"", ec.ResinName)
-			return
-		}
-		TraceVerbosef(VerbosityNotice, "  Setting default resin to %v", resin.Name)
+	if cmd.Changed("light-off") {
+		TraceVerbosef(VerbosityNotice, "  Setting default light off time to %v", cmd.LightOffTime)
+		exp.LightOffTime = cmd.LightOffTime
 	}
 
-	if ec.Changed("exposure") {
-		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", ec.LightOnTime)
-		resin.Exposure.LightOnTime = ec.LightOnTime
+	mod = &exposureModifier{
+		Printable:   input,
+		Exposure:    exp,
+		BottomCount: prop.Bottom.Count,
 	}
-
-	if ec.Changed("off-time") {
-		TraceVerbosef(VerbosityNotice, "  Setting default light off time to %v", ec.LightOffTime)
-		resin.Exposure.LightOffTime = ec.LightOffTime
-	}
-
-	if ec.Changed("bottom-count") {
-		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer count %v", ec.BottomCount)
-		resin.Bottom.Count = int(ec.BottomCount)
-	}
-
-	if ec.Changed("bottom-style") {
-		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer style %v", ec.BottomStyle)
-		styleMap := map[string]uv3dp.BottomStyle{
-			"slow": uv3dp.BottomStyleSlow,
-			"fade": uv3dp.BottomStyleFade,
-		}
-		style, found := styleMap[ec.BottomStyle]
-		if !found {
-			panic(fmt.Sprintf("exposure: Invalid --bottom-style=%v", ec.BottomStyle))
-		}
-		resin.Bottom.Style = style
-	}
-
-	if ec.Changed("bottom-exposure") {
-		TraceVerbosef(VerbosityNotice, "  Setting default bottom time to %v", ec.BottomLightOnTime)
-		resin.Bottom.Exposure.LightOnTime = ec.BottomLightOnTime
-	}
-
-	if ec.Changed("bottom-off-time") {
-		TraceVerbosef(VerbosityNotice, "  Setting default bottom off time to %v", ec.BottomLightOffTime)
-		resin.Bottom.Exposure.LightOffTime = ec.BottomLightOffTime
-	}
-
-	em := &exposureModifier{
-		Printable: input,
-		Resin:     *resin,
-	}
-
-	output = em
 
 	return
 }

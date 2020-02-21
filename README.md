@@ -38,9 +38,13 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
       (none)               Translates input file to output file
       bed                  Adjust image for a different bed size/resolution
+      bottom               Alters bottom layer exposure
       decimate             Remove outmost pixels of all islands in each layer (reduces over-curing on edges)
       exposure             Alters exposure times
       info                 Dumps information about the printable
+      lift                 Alters layer lift properties
+      resin                Changes all properties to match a selected resin
+      retract              Alters layer retract properties
     
     Options for 'bed':
     
@@ -48,24 +52,40 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -m, --millimeters float32Slice   Bed size, in millimeters (default [68.040001,120.959999])
       -p, --pixels ints                Bed size, in pixels (default [1440,2560])
     
+    Options for 'bottom':
+    
+      -c, --count int            Bottom layer count
+          --light-off duration   Bottom layer light-off time
+      -o, --light-on duration    Bottom layer light-on time
+      -s, --style string         Bottom layer style - 'fade' or 'slow' (default "slow")
+    
     Options for 'decimate':
     
     
     Options for 'exposure':
     
-      -c, --bottom-count int           Bottom layer count
-      -b, --bottom-exposure duration   Bottom layer light-on time
-          --bottom-off-time duration   Bottom layer light-off time
-      -s, --bottom-style string        Bottom layer style - 'fade' or 'slow' (default "slow")
-      -e, --exposure duration          Normal layer light-on time
-          --off-time duration          Normal layer light-off time
-      -r, --resin string               Resin type [see 'Known resins' in help]
+          --light-off duration   Normal layer light-off time
+      -o, --light-on duration    Normal layer light-on time
     
     Options for 'info':
     
       -e, --exposure   Show summary of the exposure settings (default true)
       -l, --layer      Show layer detail
       -s, --size       Show size summary (default true)
+    
+    Options for 'lift':
+    
+      -h, --height float32   Lift height
+      -s, --speed float32    Lift height
+    
+    Options for 'resin':
+    
+      -t, --type string   Resin type [see 'Known resins' in help]
+    
+    Options for 'retract':
+    
+      -h, --height float32   Retract height
+      -s, --speed float32    Retract height
     
     Options for '.cbddlp':
     
