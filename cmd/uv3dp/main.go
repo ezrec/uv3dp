@@ -12,6 +12,7 @@ import (
 	"github.com/ezrec/uv3dp"
 	_ "github.com/ezrec/uv3dp/cbddlp"
 	_ "github.com/ezrec/uv3dp/sl1"
+	_ "github.com/ezrec/uv3dp/zcodex"
 
 	"github.com/spf13/pflag"
 )
