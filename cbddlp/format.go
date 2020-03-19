@@ -132,7 +132,7 @@ func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
 	switch suffix {
 	case ".cbddlp":
 		version = 2
-		antialias = 4
+		antialias = 1
 	case ".photon":
 		version = 1
 		antialias = 1
