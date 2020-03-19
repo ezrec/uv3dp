@@ -91,6 +91,7 @@ type Properties struct {
 	Exposure Exposure
 	Bottom   Bottom
 	Preview  map[PreviewType]image.Image
+	Metadata map[string](interface{})
 }
 
 // Get image bounds
