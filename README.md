@@ -92,6 +92,9 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
       -v, --version int      Override header Version (default 2)
     
+    Options for '.ctb':
+    
+    
     Options for '.photon':
     
       -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
