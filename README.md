@@ -12,7 +12,7 @@ Printers known to work with this tool:
 | EPAX X1/X10      | cbddlp       | None                                              |
 | EPAX X1-N        | ctb          | None                                              |
 | Anycubic Photon  | photon       | None                                              |
-} Prusa SL1        | sl1          | None                                              |
+| Prusa SL1        | sl1          | None                                              |
 | Zortrax Inkspire | zcodex       | Read-only (for format conversion)                 |
 
 ## Installation
