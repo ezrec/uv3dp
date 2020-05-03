@@ -413,10 +413,14 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 }
 
 func cipher(seed uint32, slice uint32, in []byte) (out []byte) {
-	kr := NewKeyring(seed, slice)
+	if seed == 0 {
+		out = in
+	} else {
+		kr := NewKeyring(seed, slice)
 
-	for _, c := range in {
-		out = append(out, c^kr.Next())
+		for _, c := range in {
+			out = append(out, c^kr.Next())
+		}
 	}
 
 	return

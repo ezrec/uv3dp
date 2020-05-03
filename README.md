@@ -3,13 +3,17 @@ Tools for UV Resin based 3D Printers (in Go)
 
 ## Supported File Formats
 
-This tool is for devices that use the Prusa SL1 (`*.sla`) and ChiTuBox DLP (`*.cbddlp`) format files.
+This tool is for devices that use sliced image files for UV resin 3D printers.
 
 Printers known to work with this tool:
 
-| Printer      | File Formats | Issues                                            |
-| ------------ | ------------ | --------------------------------------------------|
-| EPAX X-1     | cbddlp       | None                                              |
+| Printer          | File Formats | Issues                                            |
+| ---------------- | ------------ | --------------------------------------------------|
+| EPAX X1/X10      | cbddlp       | None                                              |
+| EPAX X1-N        | ctb          | None                                              |
+| Anycubic Photon  | photon       | None                                              |
+} Prusa SL1        | sl1          | None                                              |
+| Zortrax Inkspire | zcodex       | Read-only (for format conversion)                 |
 
 ## Installation
 
