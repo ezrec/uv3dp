@@ -10,11 +10,17 @@ import (
 
 type DecimatedPrintable struct {
 	Printable
+	Passes     int // Number of passes of decimation
+	FirstLayer int // First layer to start decimating
+	Layers     int // Count of layers to decimate
 }
 
 func NewDecimatedPrintable(printable Printable) (dp *DecimatedPrintable) {
 	dp = &DecimatedPrintable{
-		Printable: printable,
+		Printable:  printable,
+		Passes:     1,
+		FirstLayer: 0,
+		Layers:     printable.Properties().Size.Layers,
 	}
 
 	return
@@ -23,7 +29,11 @@ func NewDecimatedPrintable(printable Printable) (dp *DecimatedPrintable) {
 func (dec *DecimatedPrintable) Layer(index int) (layer Layer) {
 	layer = dec.Printable.Layer(index)
 
-	layer.Image = decimateGray(layer.Image)
+	if index >= dec.FirstLayer && ((index - dec.FirstLayer) < dec.Layers) {
+		for pass := 0; pass < dec.Passes; pass++ {
+			layer.Image = decimateGray(layer.Image)
+		}
+	}
 
 	return
 }

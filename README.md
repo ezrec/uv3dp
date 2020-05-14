@@ -65,6 +65,9 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'decimate':
     
+      -b, --bottom       Decimate bottom layers only
+      -n, --normal       Decimate normal layers only
+      -p, --passes int   Number of decimation passes (default 1)
     
     Options for 'exposure':
     
