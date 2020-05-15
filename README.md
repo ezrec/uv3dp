@@ -107,6 +107,9 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
       -v, --version int      Override header Version (default 1)
     
+    Options for '.phz':
+    
+    
     Options for '.sl1':
     
       -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
