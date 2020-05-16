@@ -136,8 +136,3 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Known resins: (from local user ChiTuBox config)
     
-        Anycubic Gray                            bottom 5 slow layers, 1m0s; nominal 22s
-        Geeetech Washable Crystal                bottom 5 slow layers, 1m0s; nominal 14s
-        Siraya Blue + Anycubic Grey              bottom 4 slow layers, 1m0s; nominal 16s
-        Siraya Tech Fast Grey                    bottom 5 slow layers, 1m0s; nominal 14s
-        Tech Gray 2                              bottom 8 slow layers, 1m0s; nominal 14s
