@@ -138,6 +138,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         EPAX-X156            2160x3840, 194x345 mm
         EPAX-X9              1600x2560, 120x192 mm
         Elogoo-Mars          1440x2560, 68x121 mm
+        Phrozen-Sonic-Mini   1080x1920, 68x121 mm
         Zortrax-Inkspire     1440x2560, 72x128 mm
     
     Known resins: (from local user ChiTuBox config)
