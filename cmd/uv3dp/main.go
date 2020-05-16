@@ -83,6 +83,10 @@ var commandMap = map[string]struct {
 		NewCommander: func() Commander { return NewResinCommand() },
 		Description:  "Changes all properties to match a selected resin",
 	},
+	"select": {
+		NewCommander: func() Commander { return NewSelectCommand() },
+		Description:  "Select to print only a range of layers",
+	},
 }
 
 func Usage() {
