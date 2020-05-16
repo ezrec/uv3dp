@@ -49,6 +49,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       lift                 Alters layer lift properties
       resin                Changes all properties to match a selected resin
       retract              Alters layer retract properties
+      select               Select to print only a range of layers
     
     Options for 'bed':
     
@@ -93,6 +94,11 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
       -h, --height float32   Retract height
       -s, --speed float32    Retract height
+    
+    Options for 'select':
+    
+      -c, --count int   Count of layers to select (-1 for all layers after first) (default -1)
+      -f, --first int   First layer to select
     
     Options for '.cbddlp':
     
