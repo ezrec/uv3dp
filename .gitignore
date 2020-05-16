@@ -2,4 +2,7 @@
 *.cbddlp
 *.png
 *.swp
+*.zip
+*.phz
+*.photon
 config.ini
