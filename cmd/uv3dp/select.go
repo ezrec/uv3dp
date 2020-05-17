@@ -59,16 +59,21 @@ func (cmd *SelectCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable,
 	first := cmd.First
 	count := cmd.Count
 
-	if first >= layers {
-		first = layers - 1
-	}
+	if layers == 0 {
+		first = 0
+		count = 0
+	} else {
+		if first >= layers {
+			first = layers - 1
+		}
 
-	if count < 0 {
-		count = layers - first
-	}
+		if count < 0 {
+			count = layers - first
+		}
 
-	if first+count > layers {
-		count = layers - first
+		if first+count > layers {
+			count = layers - first
+		}
 	}
 
 	sp := &SelectPrintable{
