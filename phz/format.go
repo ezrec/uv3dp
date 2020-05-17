@@ -122,15 +122,19 @@ func durationToFloat32(time_ns time.Duration) float32 {
 
 type PhzFormatter struct {
 	*pflag.FlagSet
+
+	EncryptionSeed uint32
 }
 
-func NewPhzFormatter(suffix string) (phz *PhzFormatter) {
+func NewPhzFormatter(suffix string) (pf *PhzFormatter) {
 	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
 	flagSet.SetInterspersed(false)
 
-	phz = &PhzFormatter{
+	pf = &PhzFormatter{
 		FlagSet: flagSet,
 	}
+
+	pf.Uint32VarP(&pf.EncryptionSeed, "encryption-seed", "e", 0, "Specify a specific encryption seed")
 
 	return
 }
@@ -150,11 +154,15 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	}
 	rleHash := map[uint64]rleInfo{}
 
+	// Select an encryption seed
+	// A zero encryption seed is permitted by the printer
+	seed := pf.EncryptionSeed
+
 	headerBase := uint32(0)
 	header := phzHeader{
 		Magic:          defaultHeaderMagic,
 		Version:        2,
-		EncryptionSeed: 0, // Force encryption off, so we can de-duplicate layers
+		EncryptionSeed: seed, // Force encryption off, so we can de-duplicate layers
 	}
 	headerSize, _ := restruct.SizeOf(&header)
 
