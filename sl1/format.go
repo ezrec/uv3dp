@@ -34,6 +34,22 @@ const (
 	defaultCacheSize = 16
 )
 
+var (
+	defaultExposure = uv3dp.Exposure{
+		LiftHeight:    4,
+		LiftSpeed:     60,
+		RetractHeight: 4,
+		RetractSpeed:  60,
+	}
+
+	defaultBottomExposure = uv3dp.Exposure{
+		LiftHeight:    4,
+		LiftSpeed:     60,
+		RetractHeight: 4,
+		RetractSpeed:  60,
+	}
+)
+
 type sl1Config struct {
 	jobDir       string
 	expTime      float32
@@ -342,6 +358,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	size.LayerHeight = config.layerHeight
 
 	bot := &prop.Bottom
+	bot.Exposure = defaultBottomExposure
 	bot.Exposure.LightOnTime = time.Duration(config.expTimeFirst*1000) * time.Millisecond
 
 	if config.numFade > 0 {
@@ -353,6 +370,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	}
 
 	exp := &prop.Exposure
+	*exp = defaultExposure
 	exp.LightOnTime = time.Duration(config.expTime*1000) * time.Millisecond
 
 	// Calculate layer off time based off of total print time
@@ -361,7 +379,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	totalOffTime := config.printTime - bottomExposure - restExposure
 	layerOffTime := totalOffTime / float32(config.numFast)
 
-	exp.LightOffTime = time.Duration(layerOffTime*1000) * time.Millisecond
+	exp.LightOffTime = time.Duration(layerOffTime) * time.Millisecond
 	bot.LightOffTime = exp.LightOffTime
 
 	prop.Preview = thumbImage
