@@ -115,6 +115,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for '.phz':
     
+      -e, --encryption-seed uint32   Specify a specific encryption seed
     
     Options for '.sl1':
     
