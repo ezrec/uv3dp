@@ -9,6 +9,7 @@ import (
 	"image"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"sort"
 	"time"
 
@@ -120,7 +121,7 @@ type ctbLayerDef struct {
 	_             [4]uint32 // 14:
 }
 
-type CbdDlp struct {
+type Ctb struct {
 	properties uv3dp.Properties
 	layerDef   []ctbLayerDef
 
@@ -142,6 +143,8 @@ func durationToFloat32(time_ns time.Duration) float32 {
 
 type CtbFormatter struct {
 	*pflag.FlagSet
+
+	EncryptionSeed uint32
 }
 
 func NewCtbFormatter(suffix string) (cf *CtbFormatter) {
@@ -152,10 +155,12 @@ func NewCtbFormatter(suffix string) (cf *CtbFormatter) {
 		FlagSet: flagSet,
 	}
 
+	cf.Uint32VarP(&cf.EncryptionSeed, "encryption-seed", "e", 0, "Specify a specific encryption seed")
+
 	return
 }
 
-// Save a uv3dp.Printable in CBD DLP format
+// Save a uv3dp.Printable in CTB format
 func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
 	properties := p.Properties()
 
@@ -170,11 +175,18 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	}
 	rleHash := map[uint64]rleInfo{}
 
+	// Select an encryption seed
+	// A zero encryption seed is rejected by the printer, so check for that
+	seed := cf.EncryptionSeed
+	for seed == 0 {
+		seed = rand.Uint32()
+	}
+
 	headerBase := uint32(0)
 	header := ctbHeader{
 		Magic:          defaultHeaderMagic,
 		Version:        2,
-		EncryptionSeed: 0, // Force encryption off, so we can de-duplicate layers
+		EncryptionSeed: seed,
 	}
 	headerSize, _ := restruct.SizeOf(&header)
 
@@ -340,17 +352,18 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	if param.RetractSpeed < 0 {
 		param.RetractSpeed = defaultRetractSpeed
 	}
+	param.Unknown38 = 0x1234
 
 	// ctbSlicer
-	param.Unknown38 = 0x1234
 	slicer.MachineOffset = machineBase
 	slicer.MachineSize = uint32(machineSize)
-	slicer.EncryptionMode = 0xf // Magic!
+	slicer.EncryptionMode = 7 // Magic!
 	slicer.TimeSeconds = 0x12345678
 	slicer.ChiTuBoxVersion[0] = 1 // Magic!
 	slicer.ChiTuBoxVersion[1] = 6
 	slicer.ChiTuBoxVersion[2] = 3
-	slicer.Unknown34 = 0x200 // Magic?
+	slicer.Unknown2C = 1 // Magic?
+	slicer.Unknown34 = 0 // Magic?
 
 	// Compute total cubic millimeters (== milliliters) of all the on pixels
 	bedArea := float64(header.BedSizeMM[0] * header.BedSizeMM[1])
@@ -555,7 +568,7 @@ func (cf *CtbFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 		exp.RetractHeight = defaultRetractHeight
 	}
 
-	cbd := &CbdDlp{
+	cbd := &Ctb{
 		properties: prop,
 		layerDef:   layerDef,
 		rleMap:     rleMap,
@@ -566,15 +579,15 @@ func (cf *CtbFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 	return
 }
 
-// Properties get the properties of the CbdDlp Printable
-func (cbd *CbdDlp) Properties() (prop uv3dp.Properties) {
+// Properties get the properties of the Ctb Printable
+func (cbd *Ctb) Properties() (prop uv3dp.Properties) {
 	prop = cbd.properties
 
 	return
 }
 
 // Layer gets a layer - we decode from the RLE on-the fly
-func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
+func (cbd *Ctb) Layer(index int) (layer uv3dp.Layer) {
 	if index < 0 || index >= len(cbd.layerDef) {
 		return
 	}

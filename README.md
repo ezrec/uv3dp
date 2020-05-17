@@ -107,6 +107,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for '.ctb':
     
+      -e, --encryption-seed uint32   Specify a specific encryption seed
     
     Options for '.photon':
     
