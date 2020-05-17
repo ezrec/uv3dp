@@ -1,8 +1,11 @@
-*.sl1
+# Ignore input/output data
 *.cbddlp
+*.ctb
+*.gf
+*.photon
+*.phz
 *.png
+*.sl1
 *.swp
 *.zip
-*.phz
-*.photon
 config.ini
