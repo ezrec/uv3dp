@@ -15,7 +15,7 @@ import (
 
 const (
 	rle8EncodingLimit  = 125 // Yah, I know. Feels weird. But required.
-	rle16EncodingLimit = 0x1000
+	rle16EncodingLimit = 0xfff
 )
 
 var tab64 *crc64.Table
