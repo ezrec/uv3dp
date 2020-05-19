@@ -70,9 +70,9 @@ type cwsConfig struct {
 	UseMainliftGCodeTab bool `name:"Use Mainlift GCode Tab"`
 	AntiAliasing        bool
 	AntiAliasingValue   float32
-	ZLiftFeedRate       float32 `units:"mm/s"`
-	ZBottomLiftFeedRate float32 `units:"mm/s"`
-	ZLiftRetractRate    float32 `units:"mm/s"`
+	ZLiftFeedRate       float32 `units:"mm/min"`
+	ZBottomLiftFeedRate float32 `units:"mm/min"`
+	ZLiftRetractRate    float32 `units:"mm/min"`
 	FlipX               bool
 	FlipY               bool
 	Layers              int `name:"Number of Slices"`
@@ -160,15 +160,15 @@ func (cc *cwsConfig) Save(gcode io.Writer) (err error) {
 	if err != nil {
 		return
 	}
-	_, err = fmt.Fprintf(gcode, ";(%-24v= %vmm/s )\n", "Max X Feedrate", 200)
+	_, err = fmt.Fprintf(gcode, ";(%-24v= %vmm/min )\n", "Max X Feedrate", 200)
 	if err != nil {
 		return
 	}
-	_, err = fmt.Fprintf(gcode, ";(%-24v= %vmm/s )\n", "Max Y Feedrate", 200)
+	_, err = fmt.Fprintf(gcode, ";(%-24v= %vmm/min )\n", "Max Y Feedrate", 200)
 	if err != nil {
 		return
 	}
-	_, err = fmt.Fprintf(gcode, ";(%-24v= %vmm/s )\n", "Max Z Feedrate", 200)
+	_, err = fmt.Fprintf(gcode, ";(%-24v= %vmm/min )\n", "Max Z Feedrate", 200)
 	if err != nil {
 		return
 	}

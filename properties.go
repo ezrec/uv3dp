@@ -26,9 +26,9 @@ type Exposure struct {
 	LightOnTime   time.Duration // Exposure time
 	LightOffTime  time.Duration // Cool down time
 	LiftHeight    float32       // mm
-	LiftSpeed     float32       // mm/sec
+	LiftSpeed     float32       // mm/min
 	RetractHeight float32       // mm
-	RetractSpeed  float32       // mm/sec
+	RetractSpeed  float32       // mm/min
 }
 
 // Total duration of an exposure
