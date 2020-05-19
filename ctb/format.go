@@ -253,28 +253,29 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	totalOn := uint64(0)
 
 	type layerInfo struct {
-		Layer  *uv3dp.Layer
-		Rle    []byte
-		Hash   uint64
-		BitsOn uint
+		Z        float32
+		Exposure *uv3dp.Exposure
+		Rle      []byte
+		Hash     uint64
+		BitsOn   uint
 	}
 
 	doneMap := make([]chan layerInfo, size.Layers)
-
 	for n := 0; n < size.Layers; n++ {
 		doneMap[n] = make(chan layerInfo, 1)
-		go func(n int) {
-			layer := p.Layer(n)
-			rle, hash, bitsOn := rleEncodeGraymap(layer.Image)
-			doneMap[n] <- layerInfo{
-				Layer:  &layer,
-				Rle:    rle,
-				Hash:   hash,
-				BitsOn: bitsOn,
-			}
-			close(doneMap[n])
-		}(n)
 	}
+
+	uv3dp.WithAllLayers(p, func(n int, layer uv3dp.Layer) {
+		rle, hash, bitsOn := rleEncodeGraymap(layer.Image)
+		doneMap[n] <- layerInfo{
+			Z:        layer.Z,
+			Exposure: layer.Exposure,
+			Rle:      rle,
+			Hash:     hash,
+			BitsOn:   bitsOn,
+		}
+		close(doneMap[n])
+	})
 
 	for n := 0; n < size.Layers; n++ {
 		info := <-doneMap[n]
@@ -289,11 +290,10 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 			imageBase = align4(imageBase + uint32(len(info.Rle)))
 		}
 
-		layer := info.Layer
 		layerDef[n] = ctbLayerDef{
-			LayerHeight:   layer.Z,
-			LayerExposure: durationToFloat32(layer.Exposure.LightOnTime),
-			LayerOffTime:  durationToFloat32(layer.Exposure.LightOffTime),
+			LayerHeight:   info.Z,
+			LayerExposure: durationToFloat32(info.Exposure.LightOnTime),
+			LayerOffTime:  durationToFloat32(info.Exposure.LightOffTime),
 			ImageOffset:   rleHash[info.Hash].offset,
 			ImageLength:   uint32(len(info.Rle)),
 		}
