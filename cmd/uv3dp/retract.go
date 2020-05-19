@@ -22,8 +22,8 @@ func NewRetractCommand() (cmd *RetractCommand) {
 		FlagSet: pflag.NewFlagSet("retract", pflag.ContinueOnError),
 	}
 
-	cmd.Float32VarP(&cmd.RetractHeight, "height", "h", 0.0, "Retract height")
-	cmd.Float32VarP(&cmd.RetractSpeed, "speed", "s", 0.0, "Retract height")
+	cmd.Float32VarP(&cmd.RetractHeight, "height", "h", 0.0, "Retract height in mm")
+	cmd.Float32VarP(&cmd.RetractSpeed, "speed", "s", 0.0, "Retract speed in mm/min")
 
 	cmd.SetInterspersed(false)
 
@@ -66,7 +66,7 @@ func (cmd *RetractCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, e
 	}
 
 	if cmd.Changed("speed") {
-		TraceVerbosef(VerbosityNotice, "  Setting default retract speed to %v mm/s", cmd.RetractSpeed)
+		TraceVerbosef(VerbosityNotice, "  Setting default retract speed to %v mm/min", cmd.RetractSpeed)
 		exp.RetractSpeed = cmd.RetractSpeed
 	}
 

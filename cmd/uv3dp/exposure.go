@@ -15,8 +15,8 @@ import (
 type ExposureCommand struct {
 	*pflag.FlagSet
 
-	LightOnTime  time.Duration
-	LightOffTime time.Duration
+	LightOnTime  float32
+	LightOffTime float32
 }
 
 func NewExposureCommand() (cmd *ExposureCommand) {
@@ -24,8 +24,8 @@ func NewExposureCommand() (cmd *ExposureCommand) {
 		FlagSet: pflag.NewFlagSet("exposure", pflag.ContinueOnError),
 	}
 
-	cmd.DurationVarP(&cmd.LightOnTime, "light-on", "o", time.Duration(0), "Normal layer light-on time")
-	cmd.DurationVar(&cmd.LightOffTime, "light-off", time.Duration(0), "Normal layer light-off time")
+	cmd.Float32VarP(&cmd.LightOnTime, "light-on", "o", 0.0, "Normal layer light-on time in seconds")
+	cmd.Float32VarP(&cmd.LightOffTime, "light-off", "f", 0.0, "Normal layer light-off time in seconds")
 
 	cmd.SetInterspersed(false)
 
@@ -65,12 +65,12 @@ func (cmd *ExposureCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, 
 
 	if cmd.Changed("light-on") {
 		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", cmd.LightOnTime)
-		exp.LightOnTime = cmd.LightOnTime
+		exp.LightOnTime = time.Duration(cmd.LightOnTime * float32(time.Second))
 	}
 
 	if cmd.Changed("light-off") {
 		TraceVerbosef(VerbosityNotice, "  Setting default light off time to %v", cmd.LightOffTime)
-		exp.LightOffTime = cmd.LightOffTime
+		exp.LightOffTime = time.Duration(cmd.LightOffTime * float32(time.Second))
 	}
 
 	mod = &exposureModifier{

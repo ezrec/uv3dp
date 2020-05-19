@@ -59,10 +59,12 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'bottom':
     
-      -c, --count int            Bottom layer count
-          --light-off duration   Bottom layer light-off time
-      -o, --light-on duration    Bottom layer light-on time
-      -s, --style string         Bottom layer style - 'fade' or 'slow' (default "slow")
+      -c, --count int             Bottom layer count
+      -h, --lift-height float32   Bottom layer lift height in mm
+      -s, --lift-speed float32    Bottom layer lift speed in mm/min
+      -f, --light-off float32     Bottom layer light-off time in seconds
+      -o, --light-on float32      Bottom layer light-on time in seconds
+      -y, --style string          Bottom layer style - 'fade' or 'slow' (default "slow")
     
     Options for 'decimate':
     
@@ -72,8 +74,8 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'exposure':
     
-          --light-off duration   Normal layer light-off time
-      -o, --light-on duration    Normal layer light-on time
+      -f, --light-off float32   Normal layer light-off time in seconds
+      -o, --light-on float32    Normal layer light-on time in seconds
     
     Options for 'info':
     
@@ -83,8 +85,8 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'lift':
     
-      -h, --height float32   Lift height
-      -s, --speed float32    Lift height
+      -h, --height float32   Lift height in mm
+      -s, --speed float32    Lift speed in mm/min
     
     Options for 'resin':
     
@@ -92,8 +94,8 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'retract':
     
-      -h, --height float32   Retract height
-      -s, --speed float32    Retract height
+      -h, --height float32   Retract height in mm
+      -s, --speed float32    Retract speed in mm/min
     
     Options for 'select':
     

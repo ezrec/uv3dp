@@ -22,8 +22,8 @@ func NewLiftCommand() (cmd *LiftCommand) {
 		FlagSet: pflag.NewFlagSet("lift", pflag.ContinueOnError),
 	}
 
-	cmd.Float32VarP(&cmd.LiftHeight, "height", "h", 0.0, "Lift height")
-	cmd.Float32VarP(&cmd.LiftSpeed, "speed", "s", 0.0, "Lift height")
+	cmd.Float32VarP(&cmd.LiftHeight, "height", "h", 0.0, "Lift height in mm")
+	cmd.Float32VarP(&cmd.LiftSpeed, "speed", "s", 0.0, "Lift speed in mm/min")
 
 	cmd.SetInterspersed(false)
 
@@ -66,7 +66,7 @@ func (cmd *LiftCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err 
 	}
 
 	if cmd.Changed("speed") {
-		TraceVerbosef(VerbosityNotice, "  Setting default lift speed to %v mm/s", cmd.LiftSpeed)
+		TraceVerbosef(VerbosityNotice, "  Setting default lift speed to %v mm/min", cmd.LiftSpeed)
 		exp.LiftSpeed = cmd.LiftSpeed
 	}
 
