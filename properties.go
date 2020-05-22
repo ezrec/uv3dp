@@ -89,8 +89,8 @@ type Properties struct {
 	Size     Size
 	Exposure Exposure
 	Bottom   Bottom
-	Preview  map[PreviewType]image.Image
-	Metadata map[string](interface{})
+	Preview  map[PreviewType]image.Image `json:",omitempty"`
+	Metadata map[string](interface{})    `json:",omitempty"`
 }
 
 // Get image bounds
