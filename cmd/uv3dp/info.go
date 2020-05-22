@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/pflag"
 
@@ -60,11 +59,11 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 		}
 
 		fmt.Printf("Exposure: %.2gs on, %.2gs off\n",
-			float32(exp.LightOnTime)/float32(time.Second),
-			float32(exp.LightOffTime)/float32(time.Second))
+			exp.LightOnTime,
+			exp.LightOffTime)
 		fmt.Printf("Bottom: %.2gs on, %.2gs off (%v %v layers)\n",
-			float32(bot.Exposure.LightOnTime)/float32(time.Second),
-			float32(bot.Exposure.LightOffTime)/float32(time.Second),
+			bot.Exposure.LightOnTime,
+			bot.Exposure.LightOffTime,
 			bot.Count, bottomStyle)
 		fmt.Printf("Lift: %v mm, %v mm/min\n",
 			exp.LiftHeight, exp.LiftSpeed)

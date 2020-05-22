@@ -311,11 +311,11 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		XResolution:         size.X,
 		YResolution:         size.Y,
 		LayerThickness:      size.LayerHeight,
-		LayerTime:           int(exp.LightOnTime / time.Millisecond),
+		LayerTime:           int(exp.LightOnTime * 1000.0),
 		OutlineWidthInset:   2,
-		BottomLayersTime:    int(bot.LightOnTime / time.Millisecond),
+		BottomLayersTime:    int(bot.LightOnTime * 1000.0),
 		BottomLayers:        prop.Bottom.Count,
-		BlankingLayerTime:   int(exp.LightOffTime / time.Millisecond),
+		BlankingLayerTime:   int(exp.LightOffTime * 1000.0),
 		BuildDirection:      "Bottom_Up",
 		LiftDistance:        int(exp.LiftHeight),
 		AntiAliasing:        true,
@@ -363,7 +363,7 @@ M106 S0
 
 		// Create all the layers
 		fmt.Fprintf(gcode, "\n;<Slice> %v\n", n)
-		fmt.Fprintf(gcode, "M106 S255\n;<Delay> %v\n", int(layer.Exposure.LightOnTime/time.Millisecond))
+		fmt.Fprintf(gcode, "M106 S255\n;<Delay> %v\n", int(layer.Exposure.LightOnTime*1000.0))
 		fmt.Fprintf(gcode, "M106 S0\n;<Slice> Blank\n")
 		fmt.Fprintf(gcode, "G1 Z%1.3f F%v\n", layer.Exposure.LiftHeight, int(layer.Exposure.LiftSpeed))
 		priorZ = layer.Z
@@ -478,13 +478,13 @@ func (sf *CWSFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	size.LayerHeight = config.LayerThickness
 
 	bot := &prop.Bottom
-	bot.Exposure.LightOnTime = time.Duration(config.BottomLayersTime) * time.Millisecond
+	bot.Exposure.LightOnTime = float32(config.BottomLayersTime) / 1000.0
 
 	bot.Count = config.BottomLayers
 
 	exp := &prop.Exposure
-	exp.LightOnTime = time.Duration(config.LayerTime) * time.Millisecond
-	exp.LightOffTime = time.Duration(config.BlankingLayerTime) * time.Millisecond
+	exp.LightOnTime = float32(config.LayerTime) / 1000.0
+	exp.LightOffTime = float32(config.BlankingLayerTime) / 1000.0
 	exp.LiftHeight = float32(config.LiftDistance)
 	exp.LiftSpeed = config.ZLiftFeedRate
 	exp.RetractSpeed = config.ZLiftRetractRate

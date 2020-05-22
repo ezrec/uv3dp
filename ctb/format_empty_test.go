@@ -9,7 +9,6 @@ import (
 	"encoding/binary"
 	"image"
 	"io"
-	"time"
 
 	"testing"
 
@@ -31,8 +30,8 @@ var (
 			LayerHeight: 0.05,
 		},
 		Exposure: uv3dp.Exposure{
-			LightOnTime:   time.Millisecond * 16500,
-			LightOffTime:  time.Millisecond * 2250,
+			LightOnTime:   16.500,
+			LightOffTime:  2.250,
 			LiftHeight:    5.5,
 			LiftSpeed:     120.0,
 			RetractHeight: defaultRetractHeight, // field cannot be saved by CTB format
@@ -41,8 +40,8 @@ var (
 		Bottom: uv3dp.Bottom{
 			Count: 2,
 			Exposure: uv3dp.Exposure{
-				LightOnTime:   time.Millisecond * 16500,
-				LightOffTime:  time.Millisecond * 2250,
+				LightOnTime:   16.500,
+				LightOffTime:  2.250,
 				LiftHeight:    5.5,
 				LiftSpeed:     120.0,
 				RetractHeight: defaultRetractHeight, // field cannot be saved by CTB format

@@ -12,7 +12,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ezrec/uv3dp"
 )
@@ -114,25 +113,27 @@ func init() {
 				}
 			}
 
-			iVal, _ := strconv.ParseInt(val, 10, 32)
-			fVal, _ := strconv.ParseFloat(val, 32)
-			tVal := time.Duration(fVal * float64(time.Second))
+			iVal64, _ := strconv.ParseInt(val, 10, 32)
+			fVal64, _ := strconv.ParseFloat(val, 32)
+
+			iVal := int(iVal64)
+			fVal := float32(fVal64)
 
 			switch attr {
 			case "bottomLayCount":
-				resin.Bottom.Count = int(iVal)
+				resin.Bottom.Count = iVal
 			case "bottomLayerCount":
-				resin.Bottom.Count = int(iVal)
+				resin.Bottom.Count = iVal
 			case "bottomLayerLiftSpeed":
-				resin.Bottom.Exposure.LiftSpeed = float32(fVal)
+				resin.Bottom.Exposure.LiftSpeed = fVal
 			case "bottomLayExposureTime":
-				resin.Bottom.Exposure.LightOnTime = tVal
+				resin.Bottom.Exposure.LightOnTime = fVal
 			case "bottomLightOffTime":
-				resin.Bottom.Exposure.LightOffTime = tVal
+				resin.Bottom.Exposure.LightOffTime = fVal
 			case "normalExposureTime":
-				resin.Exposure.LightOnTime = tVal
+				resin.Exposure.LightOnTime = fVal
 			case "normalLayerLiftSpeed":
-				resin.Exposure.LiftSpeed = float32(fVal)
+				resin.Exposure.LiftSpeed = fVal
 			default:
 				// Ignored
 			}

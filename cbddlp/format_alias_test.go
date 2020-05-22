@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"image"
-	"time"
 
 	"testing"
 
@@ -51,8 +50,8 @@ var (
 			LayerHeight: 0.05,
 		},
 		Exposure: uv3dp.Exposure{
-			LightOnTime:   time.Nanosecond,
-			LightOffTime:  time.Nanosecond,
+			LightOnTime:   0.000000001,
+			LightOffTime:  0.000000001,
 			LiftHeight:    1.0,
 			LiftSpeed:     1.0,
 			RetractHeight: 1.0,
@@ -61,8 +60,8 @@ var (
 		Bottom: uv3dp.Bottom{
 			Count: 1,
 			Exposure: uv3dp.Exposure{
-				LightOnTime:   time.Nanosecond,
-				LightOffTime:  time.Nanosecond,
+				LightOnTime:   0.000000001,
+				LightOffTime:  0.000000001,
 				LiftHeight:    1.0,
 				LiftSpeed:     1.0,
 				RetractHeight: 1.0,

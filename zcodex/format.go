@@ -128,11 +128,11 @@ func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (
 	}
 
 	rm.LayerThickness = prop.Size.LayerHeight
-	rm.LayerTime = int(prop.Exposure.LightOnTime / time.Millisecond)
-	rm.BottomLayersTime = int(prop.Bottom.Exposure.LightOnTime / time.Millisecond)
+	rm.LayerTime = int(prop.Exposure.LightOnTime * 1000.0)
+	rm.BottomLayersTime = int(prop.Bottom.Exposure.LightOnTime * 1000.0)
 	rm.TotalLayersCount = prop.Size.Layers
 	rm.BottomLayersNumber = prop.Bottom.Count
-	rm.BlankingLayerTime = int(prop.Exposure.LightOffTime / time.Millisecond)
+	rm.BlankingLayerTime = int(prop.Exposure.LightOffTime * 1000.0)
 
 	var us UserSettingsData
 	anon, ok = prop.Metadata["zcodex/UserSettingsData"]
@@ -145,9 +145,9 @@ func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (
 
 	us.MaxLayer = prop.Size.Layers
 	us.LayerThickness = fmt.Sprintf("%.2g mm", prop.Size.LayerHeight)
-	us.LayerExposureTime = int(prop.Exposure.LightOnTime / time.Millisecond)
-	us.ExposureOffTime = int(prop.Exposure.LightOffTime / time.Millisecond)
-	us.BottomLayerExposureTime = int(prop.Bottom.Exposure.LightOnTime / time.Millisecond)
+	us.LayerExposureTime = int(prop.Exposure.LightOnTime * 1000.0)
+	us.ExposureOffTime = int(prop.Exposure.LightOffTime * 1000.0)
+	us.BottomLayerExposureTime = int(prop.Bottom.Exposure.LightOnTime * 1000.0)
 	us.BottomLayersCount = prop.Bottom.Count
 	us.ZLiftDistance = prop.Exposure.LiftHeight
 	us.ZLiftRetractRate = prop.Exposure.RetractSpeed
@@ -354,8 +354,8 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 	size.LayerHeight = rm.LayerThickness
 
 	exp := &prop.Exposure
-	exp.LightOnTime = time.Duration(rm.LayerTime) * time.Millisecond
-	exp.LightOffTime = time.Duration(rm.BlankingLayerTime) * time.Millisecond
+	exp.LightOnTime = float32(rm.LayerTime) / 1000.0
+	exp.LightOffTime = float32(rm.BlankingLayerTime) / 1000.0
 
 	exp.LiftHeight = us.ZLiftDistance
 	exp.RetractSpeed = us.ZLiftRetractRate
@@ -364,7 +364,7 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 	bot := &prop.Bottom
 	bot.Exposure = *exp
 
-	bot.Exposure.LightOnTime = time.Duration(rm.BottomLayersTime) * time.Millisecond
+	bot.Exposure.LightOnTime = float32(rm.BottomLayersTime) / 1000.0
 
 	bot.Count = rm.BottomLayersNumber
 	bot.Style = uv3dp.BottomStyleSlow
