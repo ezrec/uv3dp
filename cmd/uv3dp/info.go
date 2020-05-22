@@ -74,7 +74,7 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 	if info.LayerDetail {
 		for n := 0; n < prop.Size.Layers; n++ {
 			layer := input.Layer(n)
-			fmt.Printf("%d: @%.2f %+v\n", n, layer.Z, *layer.Exposure)
+			fmt.Printf("%d: @%.2f %+v\n", n, layer.Z, layer.Exposure)
 		}
 	}
 

@@ -245,7 +245,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 
 	type layerInfo struct {
 		Z        float32
-		Exposure *uv3dp.Exposure
+		Exposure uv3dp.Exposure
 		Rle      []byte
 		Hash     uint64
 		BitsOn   uint
@@ -602,7 +602,7 @@ func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
 	layer = uv3dp.Layer{
 		Z:        layerDef.LayerHeight,
 		Image:    layerImage,
-		Exposure: &exposure,
+		Exposure: exposure,
 	}
 
 	return

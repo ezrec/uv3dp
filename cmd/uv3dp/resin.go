@@ -48,8 +48,8 @@ func (mod *resinModifier) Properties() (prop uv3dp.Properties) {
 func (mod *resinModifier) Layer(index int) (layer uv3dp.Layer) {
 	layer = mod.Printable.Layer(index)
 
-	exp := &mod.Resin.Exposure
-	bot := &mod.Resin.Bottom.Exposure
+	exp := mod.Resin.Exposure
+	bot := mod.Resin.Bottom.Exposure
 	bottomCount := mod.Resin.Bottom.Count
 
 	if index < bottomCount {
