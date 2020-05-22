@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"image"
 	"io/ioutil"
-	"math"
 	"sort"
-	"time"
 
 	"encoding/binary"
 
@@ -110,14 +108,6 @@ type Phz struct {
 func align4(in uint32) (out uint32) {
 	out = (in + 0x3) & 0xfffffffc
 	return
-}
-
-func float32ToDuration(time_s float32) time.Duration {
-	return time.Duration(math.Round(float64(time_s) * float64(time.Second)))
-}
-
-func durationToFloat32(time_ns time.Duration) float32 {
-	return float32(float64(time_ns) / float64(time.Second))
 }
 
 type PhzFormatter struct {
@@ -260,8 +250,8 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 
 		layerDef[n] = phzLayerDef{
 			LayerHeight:   info.Z,
-			LayerExposure: durationToFloat32(info.Exposure.LightOnTime),
-			LayerOffTime:  durationToFloat32(info.Exposure.LightOffTime),
+			LayerExposure: info.Exposure.LightOnTime,
+			LayerOffTime:  info.Exposure.LightOffTime,
 			ImageOffset:   rleHash[info.Hash].offset,
 			ImageLength:   uint32(len(info.Rle)),
 		}
@@ -275,9 +265,9 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	header.BedSizeMM[2] = forceBedSizeMM_3
 	header.HeightMM = size.LayerHeight * float32(size.Layers)
 	header.LayerHeight = size.LayerHeight
-	header.LayerExposure = durationToFloat32(exp.LightOnTime)
-	header.BottomExposure = durationToFloat32(bot.Exposure.LightOnTime)
-	header.LayerOffTime = durationToFloat32(exp.LightOffTime)
+	header.LayerExposure = exp.LightOnTime
+	header.BottomExposure = bot.Exposure.LightOnTime
+	header.LayerOffTime = exp.LightOffTime
 	header.BottomCount = uint32(bot.Count)
 	header.ResolutionX = uint32(size.X)
 	header.ResolutionY = uint32(size.Y)
@@ -285,7 +275,7 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	header.LayerDefs = layerDefBase
 	header.LayerCount = uint32(size.Layers)
 	header.PreviewLow = previewTinyBase
-	header.PrintTime = uint32(properties.Duration() / time.Second)
+	header.PrintTime = uint32(properties.Duration())
 	header.Projector = 1 // LCD_X_MIRROR
 
 	header.AntiAliasLevel = 1
@@ -329,7 +319,7 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	pixelVolume := float64(header.LayerHeight) * bedArea / float64(bedPixels)
 	header.VolumeMilliliters = float32(float64(totalOn) * pixelVolume / 1000.0)
 
-	header.BottomLightOffTime = durationToFloat32(bot.Exposure.LightOffTime)
+	header.BottomLightOffTime = bot.Exposure.LightOffTime
 	header.BottomLayerCount = header.BottomCount
 
 	// Collect file data
@@ -479,13 +469,13 @@ func (pf *PhzFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 	size.LayerHeight = header.LayerHeight
 
 	exp := &prop.Exposure
-	exp.LightOnTime = float32ToDuration(header.LayerExposure)
-	exp.LightOffTime = float32ToDuration(header.LayerOffTime)
+	exp.LightOnTime = header.LayerExposure
+	exp.LightOffTime = header.LayerOffTime
 
 	bot := &prop.Bottom
 	bot.Count = int(header.BottomCount)
-	bot.Exposure.LightOnTime = float32ToDuration(header.BottomExposure)
-	bot.Exposure.LightOffTime = float32ToDuration(header.LayerOffTime)
+	bot.Exposure.LightOnTime = header.BottomExposure
+	bot.Exposure.LightOffTime = header.LayerOffTime
 
 	bot.Count = int(header.BottomLayerCount)
 	bot.Exposure.LiftHeight = header.BottomLiftHeight
@@ -541,11 +531,11 @@ func (phz *Phz) Layer(index int) (layer uv3dp.Layer) {
 	}
 
 	if layerDef.LayerExposure > 0.0 {
-		exposure.LightOnTime = float32ToDuration(layerDef.LayerExposure)
+		exposure.LightOnTime = layerDef.LayerExposure
 	}
 
 	if layerDef.LayerOffTime > 0.0 {
-		exposure.LightOffTime = float32ToDuration(layerDef.LayerOffTime)
+		exposure.LightOffTime = layerDef.LayerOffTime
 	}
 
 	layer = uv3dp.Layer{

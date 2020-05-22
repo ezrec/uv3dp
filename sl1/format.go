@@ -187,8 +187,8 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	config_ini := map[string]string{
 		"action":                "print",
 		"jobDir":                "uv3dp",
-		"expTime":               fmt.Sprintf("%.3g", float64(exp.LightOnTime)/float64(time.Second)),
-		"expTimeFirst":          fmt.Sprintf("%.3g", float64(bot.LightOnTime)/float64(time.Second)),
+		"expTime":               fmt.Sprintf("%.3g", exp.LightOnTime),
+		"expTimeFirst":          fmt.Sprintf("%.3g", bot.LightOnTime),
 		"fileCreationTimestamp": sl1Timestamp(),
 		"layerHeight":           layerHeight,
 		"materialName":          materialName,
@@ -196,7 +196,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		"numFast":               fmt.Sprintf("%v", size.Layers),
 		"numSlow":               fmt.Sprintf("%v", numSlow),
 		"printProfile":          layerHeight + " Normal",
-		"printTime":             fmt.Sprintf("%.3f", float64(prop.Duration())/float64(time.Second)),
+		"printTime":             fmt.Sprintf("%.3f", prop.Duration()),
 		"printerModel":          "SL1",
 		"printerProfile":        "Original Prusa SL1",
 		"prusaSlicerVersion":    "uv3dp",
@@ -359,7 +359,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	bot := &prop.Bottom
 	bot.Exposure = defaultBottomExposure
-	bot.Exposure.LightOnTime = time.Duration(config.expTimeFirst*1000) * time.Millisecond
+	bot.Exposure.LightOnTime = config.expTimeFirst
 
 	if config.numFade > 0 {
 		bot.Count = int(config.numFade)
@@ -371,7 +371,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	exp := &prop.Exposure
 	*exp = defaultExposure
-	exp.LightOnTime = time.Duration(config.expTime*1000) * time.Millisecond
+	exp.LightOnTime = config.expTime
 
 	// Calculate layer off time based off of total print time
 	bottomExposure := config.expTimeFirst * float32(config.numFade)
@@ -379,7 +379,7 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	totalOffTime := config.printTime - bottomExposure - restExposure
 	layerOffTime := totalOffTime / float32(config.numFast)
 
-	exp.LightOffTime = time.Duration(layerOffTime) * time.Millisecond
+	exp.LightOffTime = float32(layerOffTime) / 1000.0
 	bot.LightOffTime = exp.LightOffTime
 
 	prop.Preview = thumbImage

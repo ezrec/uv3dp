@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/pflag"
 
@@ -90,12 +89,12 @@ func (cmd *BottomCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable,
 
 	if cmd.Changed("light-on") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom time to %v", cmd.LightOnTime)
-		bot.Exposure.LightOnTime = time.Duration(cmd.LightOnTime * float32(time.Second))
+		bot.Exposure.LightOnTime = cmd.LightOnTime
 	}
 
 	if cmd.Changed("light-off") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom off time to %v", cmd.LightOffTime)
-		bot.Exposure.LightOffTime = time.Duration(cmd.LightOffTime * float32(time.Second))
+		bot.Exposure.LightOffTime = cmd.LightOffTime
 	}
 
 	if cmd.Changed("lift-height") {

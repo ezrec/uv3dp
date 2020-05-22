@@ -7,7 +7,6 @@ package uv3dp
 import (
 	"fmt"
 	"image"
-	"time"
 )
 
 type SizeMillimeter struct {
@@ -23,28 +22,28 @@ type Size struct {
 
 // Per-layer exposure
 type Exposure struct {
-	LightOnTime   time.Duration // Exposure time
-	LightOffTime  time.Duration // Cool down time
-	LiftHeight    float32       // mm
-	LiftSpeed     float32       // mm/min
-	RetractHeight float32       // mm
-	RetractSpeed  float32       // mm/min
+	LightOnTime   float32 // Exposure time
+	LightOffTime  float32 // Cool down time
+	LiftHeight    float32 // mm
+	LiftSpeed     float32 // mm/min
+	RetractHeight float32 // mm
+	RetractSpeed  float32 // mm/min
 }
 
 // Total duration of an exposure
-func (exp *Exposure) Duration() (total time.Duration) {
+func (exp *Exposure) Duration() (total float32) {
 	total = exp.LightOnTime + exp.LightOffTime
 
 	// Motion is lift; then retract -> move back to start at retract speed
-	total += time.Duration(exp.LiftHeight / exp.LiftSpeed * float32(time.Second))
-	total += time.Duration((exp.LiftHeight + exp.RetractHeight*2) / exp.RetractSpeed * float32(time.Second))
+	total += exp.LiftHeight / exp.LiftSpeed
+	total += (exp.LiftHeight + exp.RetractHeight*2) / exp.RetractSpeed
 	return
 }
 
 // Interpolate scales settings between this and another Exposure
 func (exp *Exposure) Interpolate(target Exposure, scale float32) (result Exposure) {
-	result.LightOnTime = exp.LightOnTime + time.Duration(float64(target.LightOnTime-exp.LightOnTime)*float64(scale))
-	result.LightOffTime = exp.LightOffTime + time.Duration(float64(target.LightOffTime-exp.LightOffTime)*float64(scale))
+	result.LightOnTime = exp.LightOnTime + float32(float64(target.LightOnTime-exp.LightOnTime)*float64(scale))
+	result.LightOffTime = exp.LightOffTime + float32(float64(target.LightOffTime-exp.LightOffTime)*float64(scale))
 	result.LiftHeight = exp.LiftHeight + (target.LiftHeight-exp.LiftHeight)*scale
 	result.LiftSpeed = exp.LiftSpeed + (target.LiftSpeed-exp.LiftSpeed)*scale
 	result.RetractHeight = exp.RetractHeight + (target.RetractHeight-exp.RetractHeight)*scale
@@ -100,13 +99,13 @@ func (prop *Properties) Bounds() image.Rectangle {
 }
 
 // Duration returns total printing time
-func (prop *Properties) Duration() (duration time.Duration) {
+func (prop *Properties) Duration() (duration float32) {
 	size := &prop.Size
 	bot := &prop.Bottom.Exposure
 	botCount := prop.Bottom.Count
 	exp := &prop.Exposure
-	botTime := bot.Duration() * time.Duration(botCount)
-	expTime := exp.Duration() * time.Duration(size.Layers-int(botCount))
+	botTime := bot.Duration() * float32(botCount)
+	expTime := exp.Duration() * float32(size.Layers-int(botCount))
 
 	duration = botTime + expTime
 

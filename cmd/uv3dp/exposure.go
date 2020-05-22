@@ -5,8 +5,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/spf13/pflag"
 
 	"github.com/ezrec/uv3dp"
@@ -65,12 +63,12 @@ func (cmd *ExposureCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, 
 
 	if cmd.Changed("light-on") {
 		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", cmd.LightOnTime)
-		exp.LightOnTime = time.Duration(cmd.LightOnTime * float32(time.Second))
+		exp.LightOnTime = cmd.LightOnTime
 	}
 
 	if cmd.Changed("light-off") {
 		TraceVerbosef(VerbosityNotice, "  Setting default light off time to %v", cmd.LightOffTime)
-		exp.LightOffTime = time.Duration(cmd.LightOffTime * float32(time.Second))
+		exp.LightOffTime = cmd.LightOffTime
 	}
 
 	mod = &exposureModifier{
