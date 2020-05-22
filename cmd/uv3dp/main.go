@@ -15,6 +15,7 @@ import (
 	_ "github.com/ezrec/uv3dp/cws"
 	_ "github.com/ezrec/uv3dp/phz"
 	_ "github.com/ezrec/uv3dp/sl1"
+	_ "github.com/ezrec/uv3dp/uvj"
 	_ "github.com/ezrec/uv3dp/zcodex"
 
 	"github.com/spf13/pflag"

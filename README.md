@@ -9,10 +9,13 @@ Printers known to work with this tool:
 
 | Printer          | File Formats | Issues                                            |
 | ---------------- | ------------ | --------------------------------------------------|
+| -                | uvj          | Zip file with JSON and image slices               |
 | EPAX X1/X10      | cbddlp       | None                                              |
 | EPAX X1-N        | ctb          | None                                              |
 | Anycubic Photon  | photon       | None                                              |
 | Prusa SL1        | sl1          | None                                              |
+| NOVA3D Elfin     | cws          | Untested                                          |
+| Phrozen Sonic    | phz          | None                                              |
 | Zortrax Inkspire | zcodex       | Read-only (for format conversion)                 |
 
 ## Installation
@@ -126,6 +129,9 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Options for '.sl1':
     
       -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
+    
+    Options for '.uvj':
+    
     
     Options for '.zcodex':
     
