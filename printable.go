@@ -12,7 +12,7 @@ import (
 // Everything needed to print a single layer
 type Layer struct {
 	Z        float32     // Z height in mm
-	Exposure *Exposure   // Layer exposure settings
+	Exposure Exposure   // Layer exposure settings
 	Image    *image.Gray // Image mask
 }
 

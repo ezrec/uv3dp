@@ -58,7 +58,7 @@ func (mod *bottomModifier) Layer(index int) (layer uv3dp.Layer) {
 	layer = mod.Printable.Layer(index)
 
 	if index < mod.Bottom.Count {
-		layer.Exposure = &mod.Bottom.Exposure
+		layer.Exposure = mod.Bottom.Exposure
 	}
 
 	return

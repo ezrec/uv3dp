@@ -33,9 +33,9 @@ func (empty *EmptyPrintable) Layer(index int) (layer Layer) {
 	layer.Image = image.NewGray(prop.Bounds())
 
 	if index < prop.Bottom.Count {
-		layer.Exposure = &prop.Bottom.Exposure
+		layer.Exposure = prop.Bottom.Exposure
 	} else {
-		layer.Exposure = &prop.Exposure
+		layer.Exposure = prop.Exposure
 	}
 
 	return
