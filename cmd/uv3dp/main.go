@@ -21,6 +21,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var Version = string("unreleased")
+
 type Verbosity int
 
 const (
@@ -31,7 +33,8 @@ const (
 )
 
 var param struct {
-	Verbose int // Verbose counts the number of '-v' flags
+	Verbose int  // Verbose counts the number of '-v' flags
+	Version bool // Show version
 }
 
 func TraceVerbosef(level Verbosity, format string, args ...interface{}) {
@@ -135,10 +138,16 @@ func Usage() {
 
 func init() {
 	pflag.CountVarP(&param.Verbose, "verbose", "v", "Verbosity")
+	pflag.BoolVarP(&param.Version, "version", "V", false, "Show version")
 	pflag.SetInterspersed(false)
 }
 
 func evaluate(args []string) (err error) {
+	if param.Version {
+		fmt.Printf("Version %v\n", Version)
+		return
+	}
+
 	if len(args) == 0 {
 		Usage()
 		return
