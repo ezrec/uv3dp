@@ -33,14 +33,14 @@ jobs:
 
       - name: Craft Linux Artifacts
         run: |
-          go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
           mkdir uv3dp-${{ steps.release.outputs.TAG }}
           cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
           tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
 
       - name: Craft Windows Artifacts
         run: |
-          GOOS=windows GOARCH=amd64 go get github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          GOOS=windows GOARCH=amd64 go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
           zip -j uv3dp-${{ steps.release.outputs.TAG }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp.exe
 
       - name: Create Release
