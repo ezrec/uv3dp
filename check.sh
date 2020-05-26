@@ -1,8 +1,17 @@
 #!/bin/bash
 
+# Build reference files
+find . -name "*.uvd" -type d | \
+    (while read i; do (cd ${i}; zip -r -D  -q -X ../$(basename $i .uvd).uvj .) done)
+
 # Run tests
 echo "=== Unit tests"
-go test -v ./... || exit 1
+go test -v ./... -test.failfast || exit 1
+
+if [ "$1" == "test" ]; then
+    # Done!
+    exit 0
+fi
 
 # Conform to formatting
 echo "=== Code formatting"

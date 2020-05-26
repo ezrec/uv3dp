@@ -25,4 +25,5 @@ jobs:
         fi
 
     - name: Run Tests
-      run: go test -v ./...
+      run: |
+          ./check.sh test
