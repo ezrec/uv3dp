@@ -1,0 +1,31 @@
+{
+  "Properties": {
+    "Size": {
+      "X": 1440,
+      "Y": 2560,
+      "Millimeter": {
+        "X": 72.0,
+        "Y": 128.0
+      },
+      "Layers": 4,
+      "LayerHeight": 0.05
+    },
+    "Exposure": {
+      "LightOnTime": 11.25,
+      "LightOffTime": 2.75,
+      "LiftHeight": 5.5,
+      "LiftSpeed": 120.125,
+      "RetractHeight": 3.75,
+      "RetractSpeed": 200
+    },
+    "Bottom": {
+      "LightOnTime": 16.5,
+      "LightOffTime": 2.25,
+      "LiftHeight": 5.5,
+      "LiftSpeed": 120,
+      "RetractHeight": 3.25,
+      "RetractSpeed": 199,
+      "Count": 1
+    }
+  }
+}

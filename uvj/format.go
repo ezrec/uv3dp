@@ -120,9 +120,19 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	fileConfig.Write([]byte("\n"))
 
 	// Save the thumbnails
-	for _, image := range preview {
+	for code, image := range preview {
 		imageSize := image.Bounds().Size()
-		filename := fmt.Sprintf("preview/%dx%d.png", imageSize.X, imageSize.Y)
+		var name string
+		switch code {
+		case uv3dp.PreviewTypeTiny:
+			name = "tiny"
+		case uv3dp.PreviewTypeHuge:
+			name = "huge"
+		default:
+			name = fmt.Sprintf("%dx%d", imageSize.X, imageSize.Y)
+		}
+
+		filename := "preview/" + name + ".png"
 
 		var writer io.Writer
 		writer, err = archive.Create(filename)
@@ -205,8 +215,8 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	// Collect the thumbnails
 	thumbs := map[uv3dp.PreviewType]string{
-		uv3dp.PreviewTypeTiny: "preview/400x400.png",
-		uv3dp.PreviewTypeHuge: "preview/800x480.png",
+		uv3dp.PreviewTypeTiny: "preview/tiny.png",
+		uv3dp.PreviewTypeHuge: "preview/huge.png",
 	}
 
 	thumbImage := make(map[uv3dp.PreviewType]image.Image)
@@ -265,7 +275,17 @@ func (uvj *UVJ) Layer(index int) (layer uv3dp.Layer) {
 	} else {
 		layer = uvj.Config.Layers[index]
 	}
-	layer.Image = pngImage.(*image.Gray)
+	layerImage, ok := pngImage.(*image.Gray)
+	if !ok {
+		layerImage = image.NewGray(pngImage.Bounds())
+		for y := pngImage.Bounds().Min.Y; y < pngImage.Bounds().Max.Y; y++ {
+			for x := pngImage.Bounds().Min.X; x < pngImage.Bounds().Max.X; x++ {
+				layerImage.Set(x, y, pngImage.At(x, y))
+			}
+		}
+	}
+
+	layer.Image = layerImage
 
 	return
 }
