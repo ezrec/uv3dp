@@ -105,11 +105,6 @@ type Phz struct {
 	rleMap map[uint32]([]byte)
 }
 
-func align4(in uint32) (out uint32) {
-	out = (in + 0x3) & 0xfffffffc
-	return
-}
-
 type PhzFormatter struct {
 	*pflag.FlagSet
 
@@ -245,7 +240,7 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 		if !ok {
 			rleHash[info.Hash] = rleInfo{offset: imageBase, rle: info.Rle}
 			rleHashList = append(rleHashList, info.Hash)
-			imageBase = align4(imageBase + uint32(len(info.Rle)))
+			imageBase = imageBase + uint32(len(info.Rle))
 		}
 
 		layerDef[n] = phzLayerDef{
