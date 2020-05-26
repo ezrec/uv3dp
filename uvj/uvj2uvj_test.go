@@ -78,8 +78,6 @@ func TestUVJToUVJ(t *testing.T) {
 		}
 
 		if uvj_ok {
-			t.Logf("%+v: %v %+v", code, uvj_ok, uvj_prev.Bounds())
-
 			if uvj_prev.Bounds() != out_prev.Bounds() {
 				t.Errorf("%+v: expected bounds %+v, got %+v", code, uvj_prev.Bounds(), out_prev.Bounds())
 				continue
