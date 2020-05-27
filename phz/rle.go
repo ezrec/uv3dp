@@ -60,8 +60,11 @@ func rleEncodeGraymap(bm image.Image) (rle []byte, hash uint64, bitsOn uint) {
 		for x := 0; x < size.X; x++ {
 			c := bm.At(base.X+x, base.Y+y)
 			r, g, b, _ := c.RGBA()
-			// 7 bits per pixel
+			// 7 bits per pixel (clamped to 0..0x7c)
 			grey7 = uint8(uint16(r|g|b)>>9) & 0x7f
+			if grey7 > 0x7c {
+				grey7 = 0x7c
+			}
 
 			switch {
 			case color == 0xff:
@@ -94,8 +97,12 @@ func rleDecodeGraymap(bounds image.Rectangle, rle []byte) (gm *image.Gray, err e
 	for n := 0; n < len(rle); n++ {
 		code := rle[n]
 		if (code & 0x80) == 0x80 {
-			// Convert from 7bpp to 8bpp (extending the last bit)
+			// Convert from 0..124 to 8bpp
 			lastColor = ((code & 0x7f) << 1) | (code & 1)
+			if lastColor >= 0xfc {
+				// Make 'white' actually white
+				lastColor = 0xff
+			}
 			if index < limit {
 				pix[index] = lastColor
 			}
