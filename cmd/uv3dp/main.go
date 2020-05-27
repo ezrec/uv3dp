@@ -33,8 +33,9 @@ const (
 )
 
 var param struct {
-	Verbose int  // Verbose counts the number of '-v' flags
-	Version bool // Show version
+	Verbose  int  // Verbose counts the number of '-v' flags
+	Version  bool // Show version
+	Progress bool // Show progress bar
 }
 
 func TraceVerbosef(level Verbosity, format string, args ...interface{}) {
@@ -136,7 +137,20 @@ func Usage() {
 	PrintResins()
 }
 
+type cliProgress struct {
+	Format *uv3dp.Format
+}
+
+func (cp *cliProgress) Show(percent float32) {
+	fmt.Printf("%v: %.2f%%\r", cp.Format.Filename, percent)
+}
+
+func (cp *cliProgress) Stop() {
+	fmt.Println()
+}
+
 func init() {
+	pflag.BoolVarP(&param.Progress, "progress", "p", false, "Show progress during operations")
 	pflag.CountVarP(&param.Verbose, "verbose", "v", "Verbosity")
 	pflag.BoolVarP(&param.Version, "version", "V", false, "Show version")
 	pflag.SetInterspersed(false)
@@ -184,6 +198,10 @@ func evaluate(args []string) (err error) {
 				}
 			} else {
 				// Otherwise save the file
+				if param.Progress {
+					uv3dp.SetProgress(&cliProgress{Format: format})
+				}
+
 				err = format.SetPrintable(input)
 				TraceVerbosef(VerbosityDebug, "%v: Output (err: %v)", format.Filename, err)
 				if err != nil {
