@@ -23,7 +23,12 @@ type Printable interface {
 
 // WithAllLayers executes a function in parallel over all of the layers
 func WithAllLayers(p Printable, do func(n int, layer Layer)) {
-	layers := p.Properties().Size.Layers
+	prop := p.Properties()
+
+	layers := prop.Size.Layers
+
+	prog := NewProgress(layers)
+	defer prog.Close()
 
 	guard := make(chan struct{}, runtime.GOMAXPROCS(0))
 	for n := 0; n < layers; n++ {
@@ -31,6 +36,7 @@ func WithAllLayers(p Printable, do func(n int, layer Layer)) {
 		go func(p Printable, do func(n int, layer Layer), n int) {
 			layer := p.Layer(n)
 			do(n, layer)
+			prog.Indicate()
 			layer.Image = nil
 			runtime.GC()
 			<-guard

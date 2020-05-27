@@ -39,6 +39,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options:
     
+      -p, --progress        Show progress during operations
       -v, --verbose count   Verbosity
       -V, --version         Show version
     
