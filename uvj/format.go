@@ -85,9 +85,7 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	}
 
 	// Create all the layers
-	for n := 0; n < prop.Size.Layers; n++ {
-		layer := printable.Layer(n)
-
+	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
 		filename := fmt.Sprintf("slice/%08d.png", n)
 
 		var writer io.Writer
@@ -103,7 +101,7 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 
 		layer.Image = nil
 		config.Layers[n] = layer
-	}
+	})
 
 	// Create the config file
 	fileConfig, err := archive.Create("config.json")
@@ -236,6 +234,7 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 		var thumb image.Image
 		thumb, err = png.Decode(reader)
 		if err != nil {
+			err = fmt.Errorf("%s: %w", file.Name, err)
 			return
 		}
 		thumbImage[pt] = thumb
@@ -264,6 +263,7 @@ func (uvj *UVJ) Properties() (prop uv3dp.Properties) {
 func (uvj *UVJ) Layer(index int) (layer uv3dp.Layer) {
 	pngImage, err := png.Decode(bytes.NewReader(uvj.layerPng[index]))
 	if err != nil {
+		err = fmt.Errorf("Layer %v: %w", index, err)
 		panic(err)
 	}
 
