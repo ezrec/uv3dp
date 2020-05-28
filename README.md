@@ -13,6 +13,7 @@ Printers known to work with this tool:
 | EPAX X1/X10      | cbddlp       | None                                              |
 | EPAX X1-N        | ctb          | None                                              |
 | Anycubic Photon  | photon       | None                                              |
+} Anycubic Photons | pws          | Untested                                          |
 | Prusa SL1        | sl1          | None                                              |
 | NOVA3D Elfin     | cws          | Untested                                          |
 | Phrozen Sonic    | phz          | None                                              |
@@ -127,6 +128,10 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Options for '.phz':
     
       -e, --encryption-seed uint32   Specify a specific encryption seed
+    
+    Options for '.pws':
+    
+      -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
     
     Options for '.sl1':
     
