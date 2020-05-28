@@ -220,9 +220,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	}
 
 	// Create all the layers
-	for n := 0; n < size.Layers; n++ {
-		layer := printable.Layer(n)
-
+	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
 		filename := fmt.Sprintf("%s%05d.png", config_ini["jobDir"], n)
 
 		var writer io.Writer
@@ -235,7 +233,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		if err != nil {
 			return
 		}
-	}
+	})
 
 	// Save the thumbnails
 	for _, image := range prop.Preview {

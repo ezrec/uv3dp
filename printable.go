@@ -7,6 +7,7 @@ package uv3dp
 import (
 	"image"
 	"runtime"
+	"sync"
 )
 
 // Everything needed to print a single layer
@@ -42,4 +43,15 @@ func WithAllLayers(p Printable, do func(n int, layer Layer)) {
 			<-guard
 		}(p, do, n)
 	}
+}
+
+// WithEachLayer executes a function in over all of the layers, serially (but possibly out of order)
+func WithEachLayer(p Printable, do func(n int, layer Layer)) {
+	var mutex sync.Mutex
+
+	WithAllLayers(p, func(n int, layer Layer) {
+		mutex.Lock()
+		do(n, layer)
+		mutex.Unlock()
+	})
 }

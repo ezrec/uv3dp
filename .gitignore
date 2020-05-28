@@ -1,6 +1,7 @@
 # Ignore input/output data
 *.cbddlp
 *.ctb
+*.cws
 *.gf
 *.photon
 *.phz
@@ -9,4 +10,3 @@
 *.swp
 *.uvj
 *.zip
-config.ini

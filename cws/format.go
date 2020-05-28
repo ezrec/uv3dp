@@ -281,9 +281,7 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	exp := &prop.Exposure
 	bot := &prop.Bottom.Exposure
 
-	for n := 0; n < size.Layers; n++ {
-		layer := printable.Layer(n)
-
+	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
 		filename := fmt.Sprintf("%s%04d.png", jobName, n)
 
 		var writer io.Writer
@@ -296,7 +294,7 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		if err != nil {
 			return
 		}
-	}
+	})
 
 	config := cwsConfig{
 		Header: cwsHeader{
