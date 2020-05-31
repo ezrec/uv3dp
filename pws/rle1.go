@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	rle8EncodingLimit = 0x7d // Yah, I know. Feels weird. But required.
+	rle1EncodingLimit = 0x7d // Yah, I know. Feels weird. But required.
 )
 
 var tab64 *crc64.Table
@@ -26,7 +26,7 @@ func hash64(data []byte) (hash uint64) {
 	return
 }
 
-func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bitsOn uint) {
+func rle1EncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bitsOn uint) {
 	base := bm.Bounds().Min
 	size := bm.Bounds().Size()
 
@@ -51,7 +51,7 @@ func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bi
 			nbit := (ngrey & (1 << ((16 - bits) + bit))) != 0
 			if nbit == obit {
 				rep++
-				if rep == rle8EncodingLimit {
+				if rep == rle1EncodingLimit {
 					addRep(obit, rep)
 					rep = 0
 				}
@@ -71,7 +71,7 @@ func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bi
 	return
 }
 
-func rleDecodeInto(pix []uint8, rle []byte, bitValue uint8) (data []byte, err error) {
+func rle1DecodeInto(pix []uint8, rle []byte, bitValue uint8) (data []byte, err error) {
 	var index int
 	var b byte
 
@@ -109,7 +109,7 @@ func rleDecodeInto(pix []uint8, rle []byte, bitValue uint8) (data []byte, err er
 	return
 }
 
-func rleDecodeBitmaps(bounds image.Rectangle, rle []byte, bits int) (gm *image.Gray, err error) {
+func rle1DecodeBitmaps(bounds image.Rectangle, rle []byte, bits int) (gm *image.Gray, err error) {
 	switch bits {
 	case 1:
 	case 2:
@@ -130,7 +130,7 @@ func rleDecodeBitmaps(bounds image.Rectangle, rle []byte, bits int) (gm *image.G
 
 	for bit := 0; bit < bits; bit++ {
 		bitValue := uint8((255 / ((1 << bits) - 1)) * (1 << bit))
-		rle, err = rleDecodeInto(gm.Pix, rle, bitValue)
+		rle, err = rle1DecodeInto(gm.Pix, rle, bitValue)
 		if err != nil {
 			err = fmt.Errorf("bitplane %v: %w", bit, err)
 			return

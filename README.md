@@ -13,6 +13,7 @@ Printers known to work with this tool:
 | EPAX X1/X10      | cbddlp       | None                                              |
 | EPAX X1-N        | ctb          | None                                              |
 | Anycubic Photon  | photon       | None                                              |
+} Anycubic Zero    | pw0          | Untested                                          |
 } Anycubic Photons | pws          | Untested                                          |
 | Prusa SL1        | sl1          | None                                              |
 | NOVA3D Elfin     | cws          | Untested                                          |
@@ -129,6 +130,10 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
       -e, --encryption-seed uint32   Specify a specific encryption seed
     
+    Options for '.pw0':
+    
+      -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
+    
     Options for '.pws':
     
       -a, --anti-alias int   Override antialias level (1,2,4,8) (default 1)
@@ -152,6 +157,8 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Known machines:
     
         Anycubic-Photon      1440x2560, 68x121 mm
+        Anycubic-Photon-S    1440x2560, 68x121 mm
+        Anycubic-Photon-Zero 480x854, 55.4x28.1 mm
         EPAX-X1              1440x2560, 68x121 mm
         EPAX-X10             1600x2560, 135x216 mm
         EPAX-X133            2160x3840, 165x293 mm
