@@ -108,7 +108,7 @@ type Header struct {
 	ResolutionY       uint32
 	Weight            float32
 	Price             float32
-	ResinType         uint32
+	ResinType         uint32 // 0x24 ?
 	PerLayerOverride  uint32 // bool
 	_                 [3]uint32
 }
@@ -203,6 +203,52 @@ func (preview *Preview) SetImage(preview_image image.Image) {
 	preview.imageData = data
 }
 
+type SliceFormat int
+
+const (
+	SliceFormatPWS = SliceFormat(iota)
+	SliceFormatPW0
+)
+
+type Slice struct {
+	AntiAlias int
+	Format    SliceFormat
+	Bounds    image.Rectangle
+	Data      []byte
+}
+
+func (slice *Slice) GetImage() (gray *image.Gray, err error) {
+	switch slice.Format {
+	case SliceFormatPWS:
+		gray, err = rle1DecodeBitmaps(slice.Bounds, slice.Data, slice.AntiAlias)
+	case SliceFormatPW0:
+		gray, err = rle4DecodeBitmaps(slice.Bounds, slice.Data, slice.AntiAlias)
+	}
+
+	return
+}
+
+func (slice *Slice) SetImage(gray *image.Gray) (err error) {
+	var data []byte
+	switch slice.Format {
+	case SliceFormatPWS:
+		for bit := 0; bit < slice.AntiAlias; bit++ {
+			rle, _, _ := rle1EncodeBitmap(gray, bit, slice.AntiAlias)
+			data = append(data, rle...)
+		}
+	case SliceFormatPW0:
+		data, err = rle4EncodeBitmaps(gray, slice.AntiAlias)
+		if err != nil {
+			return
+		}
+	}
+
+	slice.Bounds = gray.Bounds()
+	slice.Data = data
+
+	return
+}
+
 type Layer struct {
 	ImageAddr   uint32
 	ImageLength uint32
@@ -212,7 +258,7 @@ type Layer struct {
 	LayerHeight float32
 	_           [2]float32
 
-	layerData []byte
+	slice Slice
 }
 
 var sectionMarkLayerDef = [12]byte{'L', 'A', 'Y', 'E', 'R', 'D', 'E', 'F'}
@@ -236,13 +282,13 @@ type Print struct {
 	properties       uv3dp.Properties
 	perLayerOverride bool
 	layers           []Layer
-	antiAlias        int
 }
 
 type Format struct {
 	*pflag.FlagSet
 
-	AntiAlias int // AntiAlias level, one of [1,2,4,8]
+	AntiAlias   int // AntiAlias level, one of [1,2,4,8]
+	sliceFormat SliceFormat
 }
 
 func NewFormatter(suffix string) (sf *Format) {
@@ -250,6 +296,13 @@ func NewFormatter(suffix string) (sf *Format) {
 
 	sf = &Format{
 		FlagSet: flagSet,
+	}
+
+	switch suffix {
+	case ".pws":
+		sf.sliceFormat = SliceFormatPWS
+	case ".pw0":
+		sf.sliceFormat = SliceFormatPW0
 	}
 
 	sf.IntVarP(&sf.AntiAlias, "anti-alias", "a", 1, "Override antialias level (1,2,4,8)")
@@ -302,14 +355,9 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 			LayerHeight: header.LayerHeight,
 		}
 
-		var data []byte
-
-		for bit := 0; bit < sf.AntiAlias; bit++ {
-			rle, _, _ := rleEncodeBitmap(layer.Image, bit, sf.AntiAlias)
-			data = append(data, rle...)
-		}
-
-		l.layerData = data
+		l.slice.AntiAlias = sf.AntiAlias
+		l.slice.Format = sf.sliceFormat
+		l.slice.SetImage(layer.Image)
 
 		layers[n] = l
 	})
@@ -350,7 +398,7 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 	// Compute the layer offset
 	offset := filemark.LayerImageAddr
 	for n := 0; n < len(layers); n++ {
-		size := uint32(len(layers[n].layerData))
+		size := uint32(len(layers[n].slice.Data))
 		layers[n].ImageAddr = offset
 		layers[n].ImageLength = size
 		offset += size
@@ -394,7 +442,7 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 
 	// Write out layer images
 	for _, layer := range layerdef.Layer {
-		_, err = writer.Write(layer.layerData)
+		_, err = writer.Write(layer.slice.Data)
 	}
 
 	return
@@ -454,8 +502,14 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		return
 	}
 
+	bounds := image.Rect(0, 0, int(header.ResolutionX), int(header.ResolutionY))
 	for n, layer := range layerdef.Layer {
-		layerdef.Layer[n].layerData = raw[int(layer.ImageAddr) : int(layer.ImageAddr)+int(layer.ImageLength)]
+		layerdef.Layer[n].slice = Slice{
+			Data:      raw[int(layer.ImageAddr) : int(layer.ImageAddr)+int(layer.ImageLength)],
+			Bounds:    bounds,
+			Format:    sf.sliceFormat,
+			AntiAlias: int(header.AntiAlias),
+		}
 	}
 
 	exposure := uv3dp.Exposure{
@@ -499,7 +553,6 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		properties:       prop,
 		layers:           layerdef.Layer,
 		perLayerOverride: header.PerLayerOverride != 0,
-		antiAlias:        int(header.AntiAlias),
 	}
 
 	return
@@ -525,7 +578,8 @@ func (pws *Print) Layer(index int) (layer uv3dp.Layer) {
 		layer.Exposure.LiftSpeed = l.LiftSpeed * 60
 	}
 
-	slice, err := rleDecodeBitmaps(prop.Bounds(), pws.layers[index].layerData, pws.antiAlias)
+	slice, err := pws.layers[index].slice.GetImage()
+
 	if err != nil {
 		panic(fmt.Sprintf("layer %d: %v", index, err))
 	}
