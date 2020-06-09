@@ -158,13 +158,14 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
         Anycubic-Photon      1440x2560, 68x121 mm
         Anycubic-Photon-S    1440x2560, 68x121 mm
-        Anycubic-Photon-Zero 480x854, 55.4x28.1 mm
+        Anycubic-Photon-Zero 480x854, 55.4x98.6 mm
         EPAX-X1              1440x2560, 68x121 mm
         EPAX-X10             1600x2560, 135x216 mm
         EPAX-X133            2160x3840, 165x293 mm
         EPAX-X156            2160x3840, 194x345 mm
         EPAX-X9              1600x2560, 120x192 mm
         Elogoo-Mars          1440x2560, 68x121 mm
+        Kelant-S400          1600x2560, 120x192 mm
         Nova3D-Elfin         1410x2550, 73x132 mm
         Phrozen-Sonic-Mini   1080x1920, 68x121 mm
         Zortrax-Inkspire     1440x2560, 72x128 mm
