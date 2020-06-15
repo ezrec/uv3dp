@@ -52,6 +52,7 @@ var (
 		Exposure: uv3dp.Exposure{
 			LightOnTime:   0.000000001,
 			LightOffTime:  0.000000001,
+			LightPWM:      255,
 			LiftHeight:    1.0,
 			LiftSpeed:     1.0,
 			RetractHeight: 1.0,
@@ -62,6 +63,7 @@ var (
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   0.000000001,
 				LightOffTime:  0.000000001,
+				LightPWM:      255,
 				LiftHeight:    1.0,
 				LiftSpeed:     1.0,
 				RetractHeight: 1.0,

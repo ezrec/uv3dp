@@ -15,6 +15,7 @@ type ExposureCommand struct {
 
 	LightOnTime  float32
 	LightOffTime float32
+	LightPWM     uint8
 }
 
 func NewExposureCommand() (cmd *ExposureCommand) {
@@ -24,6 +25,7 @@ func NewExposureCommand() (cmd *ExposureCommand) {
 
 	cmd.Float32VarP(&cmd.LightOnTime, "light-on", "o", 0.0, "Normal layer light-on time in seconds")
 	cmd.Float32VarP(&cmd.LightOffTime, "light-off", "f", 0.0, "Normal layer light-off time in seconds")
+	cmd.Uint8VarP(&cmd.LightPWM, "pwm", "p", 255, "Light PWM rate (0..255)")
 
 	cmd.SetInterspersed(false)
 
@@ -69,6 +71,11 @@ func (cmd *ExposureCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, 
 	if cmd.Changed("light-off") {
 		TraceVerbosef(VerbosityNotice, "  Setting default light off time to %v", cmd.LightOffTime)
 		exp.LightOffTime = cmd.LightOffTime
+	}
+
+	if cmd.Changed("pwm") {
+		TraceVerbosef(VerbosityNotice, "  Setting default light PWM to %v", cmd.LightPWM)
+		exp.LightPWM = cmd.LightPWM
 	}
 
 	mod = &exposureModifier{

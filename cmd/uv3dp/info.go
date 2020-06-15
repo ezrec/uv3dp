@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/pflag"
 
@@ -58,17 +59,35 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 			bottomStyle = fmt.Sprintf("%+v", bot.Style)
 		}
 
-		fmt.Printf("Exposure: %.2gs on, %.2gs off\n",
+		fmt.Printf("Exposure: %.2gs on, %.2gs off",
 			exp.LightOnTime,
 			exp.LightOffTime)
-		fmt.Printf("Bottom: %.2gs on, %.2gs off (%v %v layers)\n",
+		if exp.LightPWM != 255 {
+			fmt.Printf(", PWM %v", exp.LightPWM)
+		}
+		fmt.Println()
+		fmt.Printf("Bottom: %.2gs on, %.2gs off",
 			bot.Exposure.LightOnTime,
-			bot.Exposure.LightOffTime,
-			bot.Count, bottomStyle)
+			bot.Exposure.LightOffTime)
+		if bot.Exposure.LightPWM != 255 {
+			fmt.Printf(", PWM %v", bot.Exposure.LightPWM)
+		}
+		fmt.Printf(" (%v %v layers)\n", bot.Count, bottomStyle)
 		fmt.Printf("Lift: %v mm, %v mm/min\n",
 			exp.LiftHeight, exp.LiftSpeed)
 		fmt.Printf("Retract: %v mm, %v mm/min\n",
 			exp.RetractHeight, exp.RetractSpeed)
+
+		keys := []string{}
+		for k := range prop.Metadata {
+			keys = append(keys, k)
+		}
+
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			fmt.Printf("%v: %v\n", k, prop.Metadata[k])
+		}
 	}
 
 	if info.LayerDetail {

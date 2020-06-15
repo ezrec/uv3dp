@@ -33,6 +33,7 @@ var (
 		Exposure: uv3dp.Exposure{
 			LightOnTime:   16.500,
 			LightOffTime:  2.250,
+			LightPWM:      255,
 			LiftHeight:    5.5,
 			LiftSpeed:     120.0,
 			RetractHeight: defaultRetractHeight + 1.0,
@@ -43,6 +44,7 @@ var (
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   16.500,
 				LightOffTime:  2.250,
+				LightPWM:      255,
 				LiftHeight:    5.5,
 				LiftSpeed:     120.0,
 				RetractHeight: defaultRetractHeight + 2.0,
