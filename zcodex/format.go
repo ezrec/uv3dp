@@ -356,6 +356,7 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 	exp := &prop.Exposure
 	exp.LightOnTime = float32(rm.LayerTime) / 1000.0
 	exp.LightOffTime = float32(rm.BlankingLayerTime) / 1000.0
+	exp.LightPWM = 255
 
 	exp.LiftHeight = us.ZLiftDistance
 	exp.RetractSpeed = us.ZLiftRetractRate
@@ -365,6 +366,7 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 	bot.Exposure = *exp
 
 	bot.Exposure.LightOnTime = float32(rm.BottomLayersTime) / 1000.0
+	bot.Exposure.LightPWM = 255
 
 	bot.Count = rm.BottomLayersNumber
 	bot.Style = uv3dp.BottomStyleSlow

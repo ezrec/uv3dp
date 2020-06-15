@@ -24,6 +24,7 @@ type Size struct {
 type Exposure struct {
 	LightOnTime   float32 // Exposure time
 	LightOffTime  float32 // Cool down time
+	LightPWM      uint8   // PWM from 1..255
 	LiftHeight    float32 // mm
 	LiftSpeed     float32 // mm/min
 	RetractHeight float32 // mm
@@ -91,6 +92,21 @@ type Properties struct {
 	Bottom   Bottom
 	Preview  map[PreviewType]image.Image `json:",omitempty"`
 	Metadata map[string](interface{})    `json:",omitempty"`
+}
+
+// Get metadata
+func (prop *Properties) GetMetadataUint8(attr string, defValue uint8) (value uint8) {
+	value = defValue
+
+	tmp, found := prop.Metadata[attr]
+	if found {
+		u8, ok := tmp.(uint8)
+		if ok {
+			value = u8
+		}
+	}
+
+	return
 }
 
 // Get image bounds

@@ -71,6 +71,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -s, --lift-speed float32    Bottom layer lift speed in mm/min
       -f, --light-off float32     Bottom layer light-off time in seconds
       -o, --light-on float32      Bottom layer light-on time in seconds
+      -p, --pwm uint8             Light PWM rate (0..255) (default 255)
       -y, --style string          Bottom layer style - 'fade' or 'slow' (default "slow")
     
     Options for 'decimate':
@@ -83,6 +84,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
       -f, --light-off float32   Normal layer light-off time in seconds
       -o, --light-on float32    Normal layer light-on time in seconds
+      -p, --pwm uint8           Light PWM rate (0..255) (default 255)
     
     Options for 'info':
     

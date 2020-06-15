@@ -274,8 +274,9 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	header.Projector = 1 // LCD_X_MIRROR
 
 	header.AntiAliasLevel = 1
-	header.LightPWM = 255
-	header.BottomLightPWM = 255
+
+	header.LightPWM = uint16(exp.LightPWM)
+	header.BottomLightPWM = uint16(bot.Exposure.LightPWM)
 
 	header.BottomLayerCount = uint32(bot.Count)
 	header.BottomLiftSpeed = bot.Exposure.LiftSpeed
@@ -466,11 +467,13 @@ func (pf *PhzFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 	exp := &prop.Exposure
 	exp.LightOnTime = header.LayerExposure
 	exp.LightOffTime = header.LayerOffTime
+	exp.LightPWM = uint8(header.LightPWM)
 
 	bot := &prop.Bottom
 	bot.Count = int(header.BottomCount)
 	bot.Exposure.LightOnTime = header.BottomExposure
 	bot.Exposure.LightOffTime = header.LayerOffTime
+	bot.Exposure.LightPWM = uint8(header.BottomLightPWM)
 
 	bot.Count = int(header.BottomLayerCount)
 	bot.Exposure.LiftHeight = header.BottomLiftHeight

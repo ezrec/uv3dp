@@ -380,6 +380,9 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	exp.LightOffTime = float32(layerOffTime) / 1000.0
 	bot.LightOffTime = exp.LightOffTime
 
+	exp.LightPWM = 255
+	bot.LightPWM = 255
+
 	prop.Preview = thumbImage
 
 	sl1 := &Sl1{

@@ -314,8 +314,8 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		header.ParamOffset = paramBase
 		header.ParamSize = uint32(paramSize)
 		header.AntiAliasLevel = uint32(cf.AntiAlias)
-		header.LightPWM = 255
-		header.BottomLightPWM = 255
+		header.LightPWM = uint16(exp.LightPWM)
+		header.BottomLightPWM = uint16(bot.Exposure.LightPWM)
 	}
 
 	if header.Version >= 2 {
@@ -419,6 +419,11 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		return
 	}
 
+	if header.Version < 2 {
+		header.LightPWM = 255
+		header.BottomLightPWM = 255
+	}
+
 	if header.AntiAliasLevel == 0 {
 		header.AntiAliasLevel = 1
 	}
@@ -509,11 +514,13 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 	exp := &prop.Exposure
 	exp.LightOnTime = header.LayerExposure
 	exp.LightOffTime = header.LayerOffTime
+	exp.LightPWM = uint8(header.LightPWM)
 
 	bot := &prop.Bottom
 	bot.Count = int(header.BottomCount)
 	bot.Exposure.LightOnTime = header.BottomExposure
 	bot.Exposure.LightOffTime = header.LayerOffTime
+	bot.Exposure.LightPWM = uint8(header.BottomLightPWM)
 
 	if header.Version > 1 && header.ParamSize > 0 && header.ParamOffset > 0 {
 		var param cbddlpParam

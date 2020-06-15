@@ -166,6 +166,10 @@ func (preview *Preview) GetImage() (preview_image *image.RGBA, err error) {
 	pix := preview_image.Pix
 	data := preview.imageData
 
+	if len(pix)/4 != len(data)/2 {
+		panic(fmt.Sprintf("expected %v pixels, got %v", len(pix)/4, len(data)/2))
+	}
+
 	for n := 0; n < len(data); n += 2 {
 		color16 := binary.LittleEndian.Uint16(data[n : n+2])
 		r5 := uint8((color16 >> 11) & 0x1f)
@@ -515,6 +519,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 	exposure := uv3dp.Exposure{
 		LightOnTime:  header.LightOnTime,
 		LightOffTime: header.LightOffTime,
+		LightPWM:     255,
 		LiftHeight:   header.LiftHeight,
 		LiftSpeed:    header.LiftSpeed * 60.0,
 		RetractSpeed: header.RetractSpeed * 60.0,
@@ -525,6 +530,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		Exposure: uv3dp.Exposure{
 			LightOnTime:  header.BottomLightOnTime,
 			LightOffTime: header.LightOffTime,
+			LightPWM:     255,
 			LiftHeight:   header.LiftHeight,
 			LiftSpeed:    header.LiftSpeed * 60.0,
 			RetractSpeed: header.RetractSpeed * 60.0,
@@ -579,9 +585,8 @@ func (pws *Print) Layer(index int) (layer uv3dp.Layer) {
 	}
 
 	slice, err := pws.layers[index].slice.GetImage()
-
 	if err != nil {
-		panic(fmt.Sprintf("layer %d: %v", index, err))
+		panic(fmt.Sprintf("pws: layer %v/%v: %s", index+1, prop.Size.Layers, err))
 	}
 
 	layer.Z = float32(index) * prop.Size.LayerHeight

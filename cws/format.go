@@ -477,12 +477,14 @@ func (sf *CWSFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	bot := &prop.Bottom
 	bot.Exposure.LightOnTime = float32(config.BottomLayersTime) / 1000.0
+	bot.Exposure.LightPWM = 255
 
 	bot.Count = config.BottomLayers
 
 	exp := &prop.Exposure
 	exp.LightOnTime = float32(config.LayerTime) / 1000.0
 	exp.LightOffTime = float32(config.BlankingLayerTime) / 1000.0
+	exp.LightPWM = 255
 	exp.LiftHeight = float32(config.LiftDistance)
 	exp.LiftSpeed = config.ZLiftFeedRate
 	exp.RetractSpeed = config.ZLiftRetractRate
