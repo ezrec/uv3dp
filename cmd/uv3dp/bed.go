@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/pflag"
 	"golang.org/x/image/draw"
 	"image"
+	"image/color"
 
 	"github.com/ezrec/uv3dp"
 )
@@ -20,6 +21,7 @@ type BedCommand struct {
 	Pixels      []int
 	Millimeters []float32
 	Machine     string
+	Reflect     bool
 }
 
 func NewBedCommand() (bc *BedCommand) {
@@ -31,6 +33,7 @@ func NewBedCommand() (bc *BedCommand) {
 	bc.Float32SliceVarP(&bc.Millimeters, "millimeters", "m", []float32{68.04, 120.96}, "Bed size, in millimeters")
 
 	bc.StringVarP(&bc.Machine, "machine", "M", "EPAX-X1", "Size preset by machine type")
+	bc.BoolVarP(&bc.Reflect, "reflect", "r", false, "Mirror image along the X axis")
 	bc.SetInterspersed(false)
 
 	return
@@ -39,9 +42,15 @@ func NewBedCommand() (bc *BedCommand) {
 func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
 	srcSize := input.Properties().Size
 	dstSize := srcSize
+	rotate := false
 
 	if bc.Changed("machine") {
-		size := MachineMap[bc.Machine].Size
+		machine, found := MachineMap[bc.Machine]
+		if !found {
+			err = fmt.Errorf("machine '%s' is not a known machine type", bc.Machine)
+			return
+		}
+		size := machine.Size
 		dstSize.X = size.X
 		dstSize.Y = size.Y
 		dstSize.Millimeter.X = size.Xmm
@@ -56,6 +65,16 @@ func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err
 	if bc.Changed("millimeters") {
 		dstSize.Millimeter.X = bc.Millimeters[0]
 		dstSize.Millimeter.Y = bc.Millimeters[1]
+	}
+
+	// Determine if we need to rotate
+	origSize := srcSize
+	if (dstSize.X > dstSize.Y) != (srcSize.X > srcSize.Y) {
+		rotate = true
+		srcSize.X = origSize.Y
+		srcSize.Y = origSize.X
+		srcSize.Millimeter.X = origSize.Millimeter.Y
+		srcSize.Millimeter.Y = origSize.Millimeter.X
 	}
 
 	// Compute the X & Y scaling
@@ -73,19 +92,55 @@ func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err
 		Y: (dstSize.Y - dstRect.Max.Y) / 2,
 	})
 
-	fmt.Printf("Transformation: %dx%d (%.3gx%.3g mm) => [%d,%d - %d,%d]\n",
-		srcSize.X, srcSize.Y, srcSize.Millimeter.X, srcSize.Millimeter.Y,
+	var action string
+	if rotate {
+		action = " => rotate"
+	}
+
+	if bc.Reflect {
+		action += " => reflect"
+	}
+
+	fmt.Printf("Transformation: %dx%d (%.3gx%.3g mm)%s => [%d,%d - %d,%d]\n",
+		origSize.X, origSize.Y, origSize.Millimeter.X, origSize.Millimeter.Y,
+		action,
 		dstRect.Min.X, dstRect.Min.Y, dstRect.Max.X, dstRect.Max.Y)
 
 	bm := &bedModifier{
 		Printable: input,
 		size:      dstSize,
+		rotate:    rotate,
 		dstRect:   dstRect,
+		reflect:   bc.Reflect,
 	}
 
 	output = bm
 
 	return
+}
+
+// rotateImage returns an image rotated 90 degrees
+type rotateImage struct {
+	image.Image
+}
+
+func (ri *rotateImage) At(x, y int) color.Color {
+	return ri.Image.At(y, x)
+}
+
+func (ri *rotateImage) Bounds() image.Rectangle {
+	rect := ri.Image.Bounds()
+	return image.Rect(rect.Min.Y, rect.Min.X, rect.Max.Y, rect.Max.X)
+}
+
+// reflectImage returns an image reflected along the X axis
+type reflectImage struct {
+	image.Image
+	dX int
+}
+
+func (ri *reflectImage) At(x, y int) color.Color {
+	return ri.Image.At(ri.dX-x, y)
 }
 
 // bedModifier modifies the given printable to have the new size
@@ -94,6 +149,8 @@ type bedModifier struct {
 
 	size    uv3dp.Size
 	dstRect image.Rectangle
+	rotate  bool
+	reflect bool
 }
 
 func (bm *bedModifier) Properties() (prop uv3dp.Properties) {
@@ -109,7 +166,25 @@ func (bm *bedModifier) Layer(index int) (layer uv3dp.Layer) {
 
 	// Re-bed the layer to the new size
 	newImage := image.NewGray(image.Rect(0, 0, bm.size.X, bm.size.Y))
-	draw.NearestNeighbor.Scale(newImage, bm.dstRect, layer.Image, layer.Image.Bounds(), draw.Src, nil)
+
+	var srcImage image.Image
+
+	reflect := bm.reflect
+
+	// Our trivial rotation also causes a reflection, so invert the reflect operand
+	srcImage = layer.Image
+	if bm.rotate {
+		srcImage = &rotateImage{Image: srcImage}
+		reflect = !reflect
+	}
+
+	if reflect {
+		bounds := srcImage.Bounds()
+		dX := bounds.Min.X + (bounds.Max.X - 1)
+		srcImage = &reflectImage{Image: srcImage, dX: dX}
+	}
+
+	draw.NearestNeighbor.Scale(newImage, bm.dstRect, srcImage, srcImage.Bounds(), draw.Src, nil)
 
 	layer.Image = newImage
 

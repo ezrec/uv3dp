@@ -63,6 +63,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
       -M, --machine string             Size preset by machine type (default "EPAX-X1")
       -m, --millimeters float32Slice   Bed size, in millimeters (default [68.040001,120.959999])
       -p, --pixels ints                Bed size, in pixels (default [1440,2560])
+      -r, --reflect                    Mirror image along the X axis
     
     Options for 'bottom':
     
@@ -167,7 +168,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         EPAX-X156            2160x3840, 194x345 mm
         EPAX-X9              1600x2560, 120x192 mm
         Elogoo-Mars          1440x2560, 68x121 mm
-        Kelant-S400          1600x2560, 120x192 mm
+        Kelant-S400          2560x1600, 192x120 mm
         Nova3D-Elfin         1410x2550, 73x132 mm
         Phrozen-Sonic-Mini   1080x1920, 68x121 mm
         Zortrax-Inkspire     1440x2560, 72x128 mm

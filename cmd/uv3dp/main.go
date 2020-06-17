@@ -209,7 +209,7 @@ func evaluate(args []string) (err error) {
 					return
 				}
 			}
-		} else {
+		} else if input != nil {
 			cmd := item.NewCommander()
 			err = cmd.Parse(args[1:])
 			if err != nil {
@@ -222,6 +222,9 @@ func evaluate(args []string) (err error) {
 			if err != nil {
 				return
 			}
+		} else {
+			err = fmt.Errorf("no input found before first filter command")
+			return
 		}
 	}
 
