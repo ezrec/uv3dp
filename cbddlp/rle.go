@@ -29,7 +29,7 @@ func hash64(data []byte) (hash uint64) {
 	return
 }
 
-func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bitsOn uint) {
+func rleEncodeBitmap(bm image.Image, level, levels int) (rle []byte, hash uint64, bitsOn uint) {
 	base := bm.Bounds().Min
 	size := bm.Bounds().Size()
 
@@ -44,14 +44,20 @@ func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bi
 		}
 	}
 
+	// thresholds:
+	// aa 1:  127
+	// aa 2:  255 127
+	// aa 4:  255 191 127 63
+	// aa 8:  255 223 191 159 127 95 63 31
+	threshold := byte((int(256/levels) * level) - 1)
+
 	obit := false
 	rep := 0
 	for y := 0; y < size.Y; y++ {
 		for x := 0; x < size.X; x++ {
 			c := bm.At(base.X+x, base.Y+y)
-			r, g, b, _ := c.RGBA()
-			ngrey := uint16(r | g | b)
-			nbit := (ngrey & (1 << ((16 - bits) + bit))) != 0
+			ngrey := color.GrayModel.Convert(c).(color.Gray).Y
+			nbit := ngrey >= threshold
 			if nbit == obit {
 				rep++
 				if rep == rle8EncodingLimit {
@@ -74,7 +80,7 @@ func rleEncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bi
 	return
 }
 
-func rleDecodeInto(pix []uint8, rle []byte, bitValue uint8) (err error) {
+func rleDecodeInto(pix []uint8, rle []byte) (err error) {
 	var index int
 	var b byte
 
@@ -87,7 +93,7 @@ func rleDecodeInto(pix []uint8, rle []byte, bitValue uint8) (err error) {
 		// High bit is on for white, off for black
 		if (b & 0x80) != 0 {
 			for i := 0; i < reps; i++ {
-				pix[n+i] |= bitValue
+				pix[n+i]++
 			}
 		}
 		n += reps
@@ -102,17 +108,7 @@ func rleDecodeInto(pix []uint8, rle []byte, bitValue uint8) (err error) {
 }
 
 func rleDecodeBitmaps(bounds image.Rectangle, rleSet []([]byte)) (gm *image.Gray, err error) {
-	bits := len(rleSet)
-
-	switch bits {
-	case 1:
-	case 2:
-	case 4:
-	case 8:
-	default:
-		err = fmt.Errorf("Invalid Anti-Alias image set: %d bits", bits)
-		return
-	}
+	levels := len(rleSet)
 
 	pixSize := bounds.Size().X * bounds.Size().Y
 
@@ -122,12 +118,20 @@ func rleDecodeBitmaps(bounds image.Rectangle, rleSet []([]byte)) (gm *image.Gray
 		Rect:   bounds,
 	}
 
-	for bit, rle := range rleSet {
-		bitValue := uint8((255 / ((1 << bits) - 1)) * (1 << bit))
-		err = rleDecodeInto(gm.Pix, rle, bitValue)
+	for _, rle := range rleSet {
+		err = rleDecodeInto(gm.Pix, rle)
 		if err != nil {
 			return
 		}
+	}
+
+	// Convert counts into colors
+	for n, c := range gm.Pix {
+		newC := int(c) * (256 / levels)
+		if newC > 0 {
+			newC--
+		}
+		gm.Pix[n] = uint8(newC)
 	}
 
 	return

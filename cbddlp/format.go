@@ -155,8 +155,16 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 			return
 		}
 	case 2:
-		if cf.AntiAlias != 1 && cf.AntiAlias != 2 && cf.AntiAlias != 4 && cf.AntiAlias != 8 {
-			err = fmt.Errorf("illegal --anti-alias setting: %v (must be one of 1,2,4, or 8 bits)", cf.AntiAlias)
+		bad := true
+		for n := 0; n < 7; n++ {
+			if cf.AntiAlias == (1 << n) {
+				bad = false
+				break
+			}
+		}
+
+		if bad {
+			err = fmt.Errorf("illegal --anti-alias setting: %v (must be one a power of 2 from 1..64)", cf.AntiAlias)
 			return
 		}
 	default:
