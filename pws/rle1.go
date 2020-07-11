@@ -7,6 +7,7 @@ package pws
 import (
 	"fmt"
 	"image"
+	"image/color"
 
 	"hash/crc64"
 )
@@ -26,7 +27,7 @@ func hash64(data []byte) (hash uint64) {
 	return
 }
 
-func rle1EncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bitsOn uint) {
+func rle1EncodeBitmap(bm image.Image, level, levels int) (rle []byte, hash uint64, bitsOn uint) {
 	base := bm.Bounds().Min
 	size := bm.Bounds().Size()
 
@@ -41,14 +42,20 @@ func rle1EncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, b
 		}
 	}
 
+	// thresholds:
+	// aa 1:  127
+	// aa 2:  255 127
+	// aa 4:  255 191 127 63
+	// aa 8:  255 223 191 159 127 95 63 31
+	threshold := byte((int(256/levels) * level) - 1)
+
 	obit := false
 	rep := 0
 	for y := 0; y < size.Y; y++ {
 		for x := 0; x < size.X; x++ {
 			c := bm.At(base.X+x, base.Y+y)
-			r, g, b, _ := c.RGBA()
-			ngrey := uint16(r | g | b)
-			nbit := (ngrey & (1 << ((16 - bits) + bit))) != 0
+			ngrey := color.GrayModel.Convert(c).(color.Gray).Y
+			nbit := ngrey >= threshold
 			if nbit == obit {
 				rep++
 				if rep == rle1EncodingLimit {
@@ -71,7 +78,7 @@ func rle1EncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, b
 	return
 }
 
-func rle1DecodeInto(pix []uint8, rle []byte, bitValue uint8) (data []byte, err error) {
+func rle1DecodeInto(pix []uint8, rle []byte) (data []byte, err error) {
 	var index int
 	var b byte
 
@@ -84,7 +91,7 @@ func rle1DecodeInto(pix []uint8, rle []byte, bitValue uint8) (data []byte, err e
 		// High bit is on for white, off for black
 		if (b & 0x80) != 0 {
 			for i := 0; i < reps; i++ {
-				pix[n+i] |= bitValue
+				pix[n+i]++
 			}
 		}
 		n += reps
@@ -109,14 +116,14 @@ func rle1DecodeInto(pix []uint8, rle []byte, bitValue uint8) (data []byte, err e
 	return
 }
 
-func rle1DecodeBitmaps(bounds image.Rectangle, rle []byte, bits int) (gm *image.Gray, err error) {
-	switch bits {
+func rle1DecodeBitmaps(bounds image.Rectangle, rle []byte, levels int) (gm *image.Gray, err error) {
+	switch levels {
 	case 1:
 	case 2:
 	case 4:
 	case 8:
 	default:
-		err = fmt.Errorf("invalid Anti-Alias image set: %d bits", bits)
+		err = fmt.Errorf("invalid Anti-Alias image set: %d levels", levels)
 		return
 	}
 
@@ -128,13 +135,21 @@ func rle1DecodeBitmaps(bounds image.Rectangle, rle []byte, bits int) (gm *image.
 		Rect:   bounds,
 	}
 
-	for bit := 0; bit < bits; bit++ {
-		bitValue := uint8((255 / ((1 << bits) - 1)) * (1 << bit))
-		rle, err = rle1DecodeInto(gm.Pix, rle, bitValue)
+	for level := 0; level < levels; level++ {
+		rle, err = rle1DecodeInto(gm.Pix, rle)
 		if err != nil {
-			err = fmt.Errorf("bitplane %v: %w", bit, err)
+			err = fmt.Errorf("antialias %v/%v: %w", level, levels, err)
 			return
 		}
+	}
+
+	// Convert counts into colors
+	for n, c := range gm.Pix {
+		newC := int(c) * (256 / levels)
+		if newC > 0 {
+			newC--
+		}
+		gm.Pix[n] = uint8(newC)
 	}
 
 	return
