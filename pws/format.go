@@ -236,8 +236,8 @@ func (slice *Slice) SetImage(gray *image.Gray) (err error) {
 	var data []byte
 	switch slice.Format {
 	case SliceFormatPWS:
-		for bit := 0; bit < slice.AntiAlias; bit++ {
-			rle, _, _ := rle1EncodeBitmap(gray, bit, slice.AntiAlias)
+		for level := 0; level < slice.AntiAlias; level++ {
+			rle, _, _ := rle1EncodeBitmap(gray, level, slice.AntiAlias)
 			data = append(data, rle...)
 		}
 	case SliceFormatPW0:
