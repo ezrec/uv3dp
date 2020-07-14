@@ -23,11 +23,11 @@ type Size struct {
 type Exposure struct {
 	LightOnTime   float32 // Exposure time
 	LightOffTime  float32 // Cool down time
-	LightPWM      uint8   // PWM from 1..255
+	LightPWM      uint8   `json:",omitempty"` // PWM from 1..255
 	LiftHeight    float32 // mm
 	LiftSpeed     float32 // mm/min
-	RetractHeight float32 // mm
-	RetractSpeed  float32 // mm/min
+	RetractHeight float32 `json:",omitempty"` // mm
+	RetractSpeed  float32 `json:",omitempty"` // mm/min
 }
 
 // Total duration of an exposure

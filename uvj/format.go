@@ -79,6 +79,14 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	preview := prop.Preview
 	prop.Preview = nil
 
+	// If LightPWM is set to 255, don't encode it
+	if prop.Exposure.LightPWM == 255 {
+		prop.Exposure.LightPWM = 0
+	}
+	if prop.Bottom.Exposure.LightPWM == 255 {
+		prop.Bottom.Exposure.LightPWM = 0
+	}
+
 	config := UVJConfig{
 		Properties: prop,
 		Layers:     make([]uv3dp.Layer, prop.Size.Layers),
@@ -97,6 +105,11 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		err = png.Encode(writer, layer.Image)
 		if err != nil {
 			return
+		}
+
+		// Trigger the JSON 'omitdefault' as needed
+		if layer.Exposure.LightPWM == 255 {
+			layer.Exposure.LightPWM = 0
 		}
 
 		layer.Image = nil
@@ -179,11 +192,16 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	var config UVJConfig
 
+	// Set some non-zero defaults
+	config.Properties.Exposure.LightPWM = 255
+	config.Properties.Bottom.Exposure.LightPWM = 255
+
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return
 	}
 
+	// Check layers
 	if len(config.Layers) > 0 && len(config.Layers) != config.Properties.Size.Layers {
 		err = fmt.Errorf("config.json: expected %v layers, found %v layers", config.Properties.Size.Layers, config.Layers)
 		return
