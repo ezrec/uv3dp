@@ -29,7 +29,7 @@ func (empty *EmptyPrintable) Properties() (prop Properties) {
 func (empty *EmptyPrintable) Layer(index int) (layer Layer) {
 	prop := empty.Properties()
 
-	layer.Z = prop.Size.LayerHeight * float32(index)
+	layer.Z = prop.LayerZ(index)
 	layer.Image = image.NewGray(prop.Bounds())
 
 	if index < prop.Bottom.Count {

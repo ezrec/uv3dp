@@ -6,6 +6,7 @@ package uv3dp
 
 import (
 	"image"
+	"math"
 )
 
 type SizeMillimeter struct {
@@ -117,4 +118,9 @@ func (prop *Properties) LayerExposure(index int) (exposure Exposure) {
 	exposure = prop.Bottom.Exposure
 
 	return
+}
+
+// LayerZ get the default Z height at a layer index
+func (prop *Properties) LayerZ(index int) (z float32) {
+	return float32(math.Round(float64(prop.Size.LayerHeight)*float64(index+1)*100) / 100.0)
 }

@@ -287,7 +287,7 @@ func (uvj *UVJ) Layer(index int) (layer uv3dp.Layer) {
 
 	if len(uvj.Config.Layers) == 0 {
 		layer = uv3dp.Layer{
-			Z:        float32(index) * uvj.Config.Properties.Size.LayerHeight,
+			Z:        uvj.Config.Properties.LayerZ(index),
 			Exposure: uvj.Config.Properties.LayerExposure(index),
 		}
 	} else {

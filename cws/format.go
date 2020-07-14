@@ -517,7 +517,7 @@ func (cws *CWS) Layer(index int) (layer uv3dp.Layer) {
 		panic(err)
 	}
 
-	layer.Z = float32(index) * cws.properties.Size.LayerHeight
+	layer.Z = cws.properties.LayerZ(index)
 	layer.Image = pngImage.(*image.Gray)
 	layer.Exposure = cws.properties.LayerExposure(index)
 
