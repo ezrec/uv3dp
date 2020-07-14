@@ -589,7 +589,7 @@ func (pws *Print) Layer(index int) (layer uv3dp.Layer) {
 		panic(fmt.Sprintf("pws: layer %v/%v: %s", index+1, prop.Size.Layers, err))
 	}
 
-	layer.Z = float32(index) * prop.Size.LayerHeight
+	layer.Z = prop.LayerZ(index)
 	layer.Image = slice
 	return
 }

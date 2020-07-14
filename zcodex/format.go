@@ -418,7 +418,7 @@ func (zcodex *Zcodex) Layer(index int) (layer uv3dp.Layer) {
 		grayImage = asGray(pngImage)
 	}
 
-	layer.Z = float32(index) * zcodex.properties.Size.LayerHeight
+	layer.Z = zcodex.properties.LayerZ(index)
 	layer.Image = grayImage
 	layer.Exposure = zcodex.properties.LayerExposure(index)
 

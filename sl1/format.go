@@ -409,7 +409,7 @@ func (sl1 *Sl1) Layer(index int) (layer uv3dp.Layer) {
 		panic(err)
 	}
 
-	layer.Z = float32(index) * sl1.properties.Size.LayerHeight
+	layer.Z = sl1.properties.LayerZ(index)
 	layer.Image = pngImage.(*image.Gray)
 	layer.Exposure = sl1.properties.LayerExposure(index)
 

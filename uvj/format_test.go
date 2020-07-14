@@ -108,17 +108,6 @@ const (
   },
   "Layers": [
     {
-      "Z": 0,
-      "Exposure": {
-        "LightOnTime": 30.5,
-        "LightOffTime": 2.25,
-        "LiftHeight": 5.5,
-        "LiftSpeed": 120,
-        "RetractHeight": 3.3,
-        "RetractSpeed": 200
-      }
-    },
-    {
       "Z": 0.05,
       "Exposure": {
         "LightOnTime": 30.5,
@@ -132,6 +121,17 @@ const (
     {
       "Z": 0.1,
       "Exposure": {
+        "LightOnTime": 30.5,
+        "LightOffTime": 2.25,
+        "LiftHeight": 5.5,
+        "LiftSpeed": 120,
+        "RetractHeight": 3.3,
+        "RetractSpeed": 200
+      }
+    },
+    {
+      "Z": 0.15,
+      "Exposure": {
         "LightOnTime": 16.5,
         "LightOffTime": 2.25,
         "LightPWM": 123,
@@ -142,7 +142,7 @@ const (
       }
     },
     {
-      "Z": 0.15,
+      "Z": 0.2,
       "Exposure": {
         "LightOnTime": 16.5,
         "LightOffTime": 2.25,
