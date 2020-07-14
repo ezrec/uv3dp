@@ -114,7 +114,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for '.cbddlp':
     
-      -a, --anti-alias int   Override antialias level (1,2,4,8,16) (default 1)
+      -a, --anti-alias int   Override antialias level (1..16) (default 1)
       -v, --version int      Override header Version (default 2)
     
     Options for '.ctb':
@@ -126,7 +126,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for '.photon':
     
-      -a, --anti-alias int   Override antialias level (1,2,4,8,16) (default 1)
+      -a, --anti-alias int   Override antialias level (1..16) (default 1)
       -v, --version int      Override header Version (default 1)
     
     Options for '.phz':

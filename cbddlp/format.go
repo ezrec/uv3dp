@@ -141,7 +141,7 @@ func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
 	}
 
 	cf.IntVarP(&cf.Version, "version", "v", version, "Override header Version")
-	cf.IntVarP(&cf.AntiAlias, "anti-alias", "a", antialias, "Override antialias level (1,2,4,8,16)")
+	cf.IntVarP(&cf.AntiAlias, "anti-alias", "a", antialias, "Override antialias level (1..16)")
 
 	return
 }
@@ -155,16 +155,8 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 			return
 		}
 	case 2:
-		bad := true
-		for n := 0; n < 5; n++ {
-			if cf.AntiAlias == (1 << n) {
-				bad = false
-				break
-			}
-		}
-
-		if bad {
-			err = fmt.Errorf("illegal --anti-alias setting: %v (must be one a power of 2 from 1..16)", cf.AntiAlias)
+		if cf.AntiAlias < 1 || cf.AntiAlias > 16 {
+			err = fmt.Errorf("illegal --anti-alias setting: %v (must be from 1..16)", cf.AntiAlias)
 			return
 		}
 	default:
