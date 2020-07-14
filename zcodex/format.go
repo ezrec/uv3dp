@@ -369,7 +369,6 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 	bot.Exposure.LightPWM = 255
 
 	bot.Count = rm.BottomLayersNumber
-	bot.Style = uv3dp.BottomStyleSlow
 
 	prop.Preview = thumbImage
 

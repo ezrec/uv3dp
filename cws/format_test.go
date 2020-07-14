@@ -56,7 +56,6 @@ var (
 		},
 		Bottom: uv3dp.Bottom{
 			Count: 2,
-			Style: uv3dp.BottomStyleFade,
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   16.500,
 				LightOffTime:  2.250,

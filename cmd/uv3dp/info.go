@@ -49,15 +49,6 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 	if info.ExposureSummary {
 		exp := &prop.Exposure
 		bot := &prop.Bottom
-		var bottomStyle string
-		switch bot.Style {
-		case uv3dp.BottomStyleSlow:
-			bottomStyle = "slow"
-		case uv3dp.BottomStyleFade:
-			bottomStyle = "fade"
-		default:
-			bottomStyle = fmt.Sprintf("%+v", bot.Style)
-		}
 
 		fmt.Printf("Exposure: %.2gs on, %.2gs off",
 			exp.LightOnTime,
@@ -72,7 +63,7 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 		if bot.Exposure.LightPWM != 255 {
 			fmt.Printf(", PWM %v", bot.Exposure.LightPWM)
 		}
-		fmt.Printf(" (%v %v layers)\n", bot.Count, bottomStyle)
+		fmt.Printf(" (%v layers)\n", bot.Count)
 		fmt.Printf("Lift: %v mm, %v mm/min\n",
 			exp.LiftHeight, exp.LiftSpeed)
 		fmt.Printf("Retract: %v mm, %v mm/min\n",
