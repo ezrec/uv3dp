@@ -5,11 +5,8 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/spf13/pflag"
-
 	"github.com/ezrec/uv3dp"
+	"github.com/spf13/pflag"
 )
 
 type BottomCommand struct {
@@ -74,19 +71,6 @@ func (cmd *BottomCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable,
 	if cmd.Changed("count") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer count %v", cmd.Count)
 		bot.Count = int(cmd.Count)
-	}
-
-	if cmd.Changed("style") {
-		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer style %v", cmd.Style)
-		styleMap := map[string]uv3dp.BottomStyle{
-			"slow": uv3dp.BottomStyleSlow,
-			"fade": uv3dp.BottomStyleFade,
-		}
-		style, found := styleMap[cmd.Style]
-		if !found {
-			panic(fmt.Sprintf("exposure: Invalid --style=%v", cmd.Style))
-		}
-		bot.Style = style
 	}
 
 	if cmd.Changed("light-on") {

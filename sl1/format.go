@@ -139,6 +139,7 @@ type Sl1Format struct {
 	*pflag.FlagSet
 
 	MaterialName string
+	BottomFade   bool
 }
 
 func NewSl1Formatter(suffix string) (sf *Sl1Format) {
@@ -149,6 +150,7 @@ func NewSl1Formatter(suffix string) (sf *Sl1Format) {
 	}
 
 	sf.StringVarP(&sf.MaterialName, "material-name", "m", "3DM-ABS @", "config.init entry 'materialName'")
+	sf.BoolVarP(&sf.BottomFade, "bottom-fade", "f", false, "Fade bottom layers exposure time")
 	sf.SetInterspersed(false)
 
 	return
@@ -179,7 +181,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 
 	numFade := 0
 	numSlow := prop.Bottom.Count
-	if prop.Bottom.Style == uv3dp.BottomStyleFade {
+	if sf.BottomFade {
 		numFade = prop.Bottom.Count
 		numSlow = 0
 	}
@@ -361,10 +363,8 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	if config.numFade > 0 {
 		bot.Count = int(config.numFade)
-		bot.Style = uv3dp.BottomStyleFade
 	} else {
 		bot.Count = int(config.numSlow)
-		bot.Style = uv3dp.BottomStyleSlow
 	}
 
 	exp := &prop.Exposure

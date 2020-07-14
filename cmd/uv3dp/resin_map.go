@@ -79,7 +79,7 @@ func init() {
 	defResin := &Resin{
 		Name:     "",
 		Exposure: defExposure,
-		Bottom:   uv3dp.Bottom{Count: -1, Exposure: defExposure, Style: uv3dp.BottomStyleSlow},
+		Bottom:   uv3dp.Bottom{Count: -1, Exposure: defExposure},
 	}
 
 	// Set reasonable defaults
@@ -109,7 +109,7 @@ func init() {
 				resin = &Resin{
 					Name:     name,
 					Exposure: defExposure,
-					Bottom:   uv3dp.Bottom{Count: -1, Exposure: defExposure, Style: uv3dp.BottomStyleSlow},
+					Bottom:   uv3dp.Bottom{Count: -1, Exposure: defExposure},
 				}
 			}
 
@@ -170,9 +170,8 @@ func PrintResins() {
 
 	for _, key := range keys {
 		item := ResinMap[key]
-		fmt.Fprintf(os.Stderr, "    %-40s bottom %v %v layers, %v; nominal %v\n", key,
+		fmt.Fprintf(os.Stderr, "    %-40s bottom %v layers, %v; nominal %v\n", key,
 			item.Bottom.Count,
-			item.Bottom.Style,
 			item.Bottom.Exposure.LightOnTime,
 			item.Exposure.LightOnTime)
 	}

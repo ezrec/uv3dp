@@ -57,7 +57,6 @@ var (
 		},
 		Bottom: uv3dp.Bottom{
 			Count: 2,
-			Style: uv3dp.BottomStyleFade,
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   16.500,
 				LightOffTime:  2.250,
@@ -105,8 +104,7 @@ const (
       "LiftSpeed": 120,
       "RetractHeight": 3.3,
       "RetractSpeed": 200,
-      "Count": 2,
-      "Style": 1
+      "Count": 2
     }
   },
   "Layers": [

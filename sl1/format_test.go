@@ -56,7 +56,6 @@ var (
 		},
 		Bottom: uv3dp.Bottom{
 			Count: 2,
-			Style: uv3dp.BottomStyleFade,
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   16.500,
 				LightOffTime:  2.250,
@@ -112,6 +111,7 @@ func TestEncodeEmptySl1(t *testing.T) {
 	empty := uv3dp.NewEmptyPrintable(testProperties)
 
 	formatter := NewSl1Formatter(".sl1")
+	formatter.BottomFade = true
 
 	buffWriter := &bytes.Buffer{}
 	formatter.Encode(buffWriter, empty)

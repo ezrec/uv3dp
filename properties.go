@@ -5,7 +5,6 @@
 package uv3dp
 
 import (
-	"fmt"
 	"image"
 )
 
@@ -53,30 +52,10 @@ func (exp *Exposure) Interpolate(target Exposure, scale float32) (result Exposur
 	return
 }
 
-// Bottom layer style
-type BottomStyle int
-
-const (
-	BottomStyleSlow = BottomStyle(iota) // Abruptly transition from slow to normal exposure
-	BottomStyleFade                     // Gradually transition for slow to normal layers
-)
-
-func (bs BottomStyle) String() string {
-	switch bs {
-	case BottomStyleSlow:
-		return "slow"
-	case BottomStyleFade:
-		return "fade"
-	default:
-		return "unknown"
-	}
-}
-
 // Bottom layer exposure
 type Bottom struct {
-	Exposure             // Exposure
-	Count    int         // Number of bottom layers
-	Style    BottomStyle // Transition style
+	Exposure     // Exposure
+	Count    int // Number of bottom layers
 }
 
 type PreviewType uint
@@ -135,14 +114,7 @@ func (prop *Properties) LayerExposure(index int) (exposure Exposure) {
 		return
 	}
 
-	switch prop.Bottom.Style {
-	case BottomStyleSlow:
-		exposure = prop.Bottom.Exposure
-	case BottomStyleFade:
-		exposure = prop.Bottom.Exposure.Interpolate(prop.Exposure, float32(index)/float32(prop.Bottom.Count))
-	default:
-		panic(fmt.Sprintf("Unknown Properties.Bottom.Style: %+v", prop.Bottom.Style))
-	}
+	exposure = prop.Bottom.Exposure
 
 	return
 }
