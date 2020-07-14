@@ -275,6 +275,14 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 
 	header.AntiAliasLevel = 1
 
+	if exp.LightPWM == 0 {
+		exp.LightPWM = 255
+	}
+
+	if bot.Exposure.LightPWM == 0 {
+		bot.Exposure.LightPWM = 255
+	}
+
 	header.LightPWM = uint16(exp.LightPWM)
 	header.BottomLightPWM = uint16(bot.Exposure.LightPWM)
 

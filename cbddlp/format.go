@@ -311,6 +311,13 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	header.Projector = 1 // LCD_X_MIRROR
 
 	if header.Version >= 2 {
+		if exp.LightPWM == 0 {
+			exp.LightPWM = 255
+		}
+		if bot.Exposure.LightPWM == 0 {
+			bot.Exposure.LightPWM = 255
+		}
+
 		header.ParamOffset = paramBase
 		header.ParamSize = uint32(paramSize)
 		header.AntiAliasLevel = uint32(cf.AntiAlias)

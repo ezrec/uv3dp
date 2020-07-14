@@ -49,7 +49,7 @@ var (
 		Exposure: uv3dp.Exposure{
 			LightOnTime:   16.500,
 			LightOffTime:  2.250,
-			LightPWM:      255,
+			LightPWM:      123,
 			LiftHeight:    5.5,
 			LiftSpeed:     120.0,
 			RetractHeight: 3.3,
@@ -58,7 +58,7 @@ var (
 		Bottom: uv3dp.Bottom{
 			Count: 2,
 			Exposure: uv3dp.Exposure{
-				LightOnTime:   16.500,
+				LightOnTime:   30.500,
 				LightOffTime:  2.250,
 				LightPWM:      255,
 				LiftHeight:    5.5,
@@ -90,16 +90,15 @@ const (
     "Exposure": {
       "LightOnTime": 16.5,
       "LightOffTime": 2.25,
-      "LightPWM": 255,
+      "LightPWM": 123,
       "LiftHeight": 5.5,
       "LiftSpeed": 120,
       "RetractHeight": 3.3,
       "RetractSpeed": 200
     },
     "Bottom": {
-      "LightOnTime": 16.5,
+      "LightOnTime": 30.5,
       "LightOffTime": 2.25,
-      "LightPWM": 255,
       "LiftHeight": 5.5,
       "LiftSpeed": 120,
       "RetractHeight": 3.3,
@@ -111,9 +110,8 @@ const (
     {
       "Z": 0,
       "Exposure": {
-        "LightOnTime": 16.5,
+        "LightOnTime": 30.5,
         "LightOffTime": 2.25,
-        "LightPWM": 255,
         "LiftHeight": 5.5,
         "LiftSpeed": 120,
         "RetractHeight": 3.3,
@@ -123,9 +121,8 @@ const (
     {
       "Z": 0.05,
       "Exposure": {
-        "LightOnTime": 16.5,
+        "LightOnTime": 30.5,
         "LightOffTime": 2.25,
-        "LightPWM": 255,
         "LiftHeight": 5.5,
         "LiftSpeed": 120,
         "RetractHeight": 3.3,
@@ -137,7 +134,7 @@ const (
       "Exposure": {
         "LightOnTime": 16.5,
         "LightOffTime": 2.25,
-        "LightPWM": 255,
+        "LightPWM": 123,
         "LiftHeight": 5.5,
         "LiftSpeed": 120,
         "RetractHeight": 3.3,
@@ -149,7 +146,7 @@ const (
       "Exposure": {
         "LightOnTime": 16.5,
         "LightOffTime": 2.25,
-        "LightPWM": 255,
+        "LightPWM": 123,
         "LiftHeight": 5.5,
         "LiftSpeed": 120,
         "RetractHeight": 3.3,
@@ -205,10 +202,10 @@ func TestEncodeEmptyUVJ(t *testing.T) {
 		got, _ := ioutil.ReadAll(rc)
 
 		if !bytes.Equal(expected, got) {
-			if strings.HasSuffix(name, ".json_") {
+			if strings.HasSuffix(name, ".json") {
 				t.Errorf("%s: expected:\n%v\n  got:\n%v", name, string(expected), string(got))
 			} else {
-				t.Errorf("%s: expected %d bytes, got %d bytes", name, expected, got)
+				t.Errorf("%s: expected %d bytes, got %d bytes", name, len(expected), len(got))
 			}
 		}
 	}
