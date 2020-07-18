@@ -5,19 +5,15 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/spf13/pflag"
-
 	"github.com/ezrec/uv3dp"
+	"github.com/spf13/pflag"
 )
 
 type DecimateCommand struct {
 	*pflag.FlagSet
 
-	Passes int
-	Bottom bool
-	Normal bool
+	Bottom int
+	Normal int
 }
 
 func NewDecimateCommand() (cmd *DecimateCommand) {
@@ -28,9 +24,8 @@ func NewDecimateCommand() (cmd *DecimateCommand) {
 		FlagSet: flagSet,
 	}
 
-	cmd.BoolVarP(&cmd.Bottom, "bottom", "b", false, "Decimate bottom layers only")
-	cmd.BoolVarP(&cmd.Normal, "normal", "n", false, "Decimate normal layers only")
-	cmd.IntVarP(&cmd.Passes, "passes", "p", 1, "Number of decimation passes")
+	cmd.IntVarP(&cmd.Bottom, "bottom", "b", 0, "Number of bottom layer passes")
+	cmd.IntVarP(&cmd.Normal, "normal", "n", 1, "Number of normal layer passes")
 
 	cmd.SetInterspersed(false)
 
@@ -38,29 +33,30 @@ func NewDecimateCommand() (cmd *DecimateCommand) {
 }
 
 func (cmd *DecimateCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	if cmd.Bottom && cmd.Normal {
-		err = fmt.Errorf("only one of --bottom and --normal may be selected")
-		return
-	}
-
-	dec := uv3dp.NewDecimatedPrintable(input)
-
-	dec.Passes = cmd.Passes
-
 	layers := input.Properties().Size.Layers
 	botCount := input.Properties().Bottom.Count
 
-	if cmd.Bottom {
+	if cmd.Bottom > 0 {
+		dec := uv3dp.NewDecimatedPrintable(input)
+
+		dec.Passes = cmd.Bottom
 		dec.FirstLayer = 0
 		dec.Layers = botCount
+
+		input = dec
 	}
 
-	if cmd.Normal {
+	if cmd.Normal > 0 {
+		dec := uv3dp.NewDecimatedPrintable(input)
+
+		dec.Passes = cmd.Normal
 		dec.FirstLayer = botCount
 		dec.Layers = layers - botCount
+
+		input = dec
 	}
 
-	output = dec
+	output = input
 
 	return
 }
