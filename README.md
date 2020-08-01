@@ -162,6 +162,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         Anycubic-Photon      1440x2560, 68x121 mm
         Anycubic-Photon-S    1440x2560, 68x121 mm
         Anycubic-Photon-Zero 480x854, 55.4x98.6 mm
+        Creality-LD-002R     1440x2560, 68x121 mm
         EPAX-X1              1440x2560, 68x121 mm
         EPAX-X10             1600x2560, 135x216 mm
         EPAX-X133            2160x3840, 165x293 mm
