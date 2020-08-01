@@ -26,6 +26,7 @@ var (
 		"Anycubic-Photon-S":    {Size: MachineSize{1440, 2560, 68.04, 120.96}},
 		"Anycubic-Photon-Zero": {Size: MachineSize{480, 854, 55.44, 98.64}},
 		"Elogoo-Mars":          {Size: MachineSize{1440, 2560, 68.04, 120.96}},
+		"Creality-LD-002R":     {Size: MachineSize{1440, 2560, 68.04, 120.96}},
 		"EPAX-X1":              {Size: MachineSize{1440, 2560, 68.04, 120.96}},
 		"EPAX-X9":              {Size: MachineSize{1600, 2560, 120.0, 192.0}},
 		"EPAX-X10":             {Size: MachineSize{1600, 2560, 135.0, 216.0}},
