@@ -53,6 +53,7 @@ var (
 			LiftSpeed:     120.0,
 			RetractHeight: 3.3,
 			RetractSpeed:  200.0,
+			LightPWM:      100,
 		},
 		Bottom: uv3dp.Bottom{
 			Count: 2,
@@ -63,6 +64,7 @@ var (
 				LiftSpeed:     120.0,
 				RetractHeight: 3.3,
 				RetractSpeed:  200.0,
+				LightPWM:      255,
 			},
 		},
 		Preview: map[uv3dp.PreviewType]image.Image{
@@ -99,7 +101,7 @@ const (
 ;(Flip X                  = True )
 ;(Flip Y                  = True )
 ;(Number of Slices        = 4 )
-(****Machine Configuration ******)
+;(****Machine Configuration ******)
 ;(Platform X Size         = 5.00mm )
 ;(Platform Y Size         = 10.00mm )
 ;(Platform Z Size         = 0.20mm )
@@ -107,12 +109,13 @@ const (
 ;(Max Y Feedrate          = 200mm/min )
 ;(Max Z Feedrate          = 200mm/min )
 ;(Machine Type            = UV_LCD )
+;Number of Slices = 4
 
 G28
 G21 ;Set units to be mm
 G91 ;Relative Positioning
 M17 ;Enable motors
-<Slice> Blank
+;<Slice> Blank
 M106 S0
 
 ;<Slice> 0
@@ -134,7 +137,7 @@ G1 Z-5.450 F120
 ;<Delay> 6000
 
 ;<Slice> 2
-M106 S255
+M106 S100
 ;<Delay> 16500
 M106 S0
 ;<Slice> Blank
@@ -143,7 +146,7 @@ G1 Z-5.450 F120
 ;<Delay> 6000
 
 ;<Slice> 3
-M106 S255
+M106 S100
 ;<Delay> 16500
 M106 S0
 ;<Slice> Blank

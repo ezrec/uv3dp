@@ -144,7 +144,7 @@ func (cc *cwsConfig) Save(gcode io.Writer) (err error) {
 		}
 	}
 
-	_, err = fmt.Fprintf(gcode, "(****Machine Configuration ******)\n")
+	_, err = fmt.Fprintf(gcode, ";(****Machine Configuration ******)\n")
 	if err != nil {
 		return
 	}
@@ -176,6 +176,8 @@ func (cc *cwsConfig) Save(gcode io.Writer) (err error) {
 	if err != nil {
 		return
 	}
+
+	_, err = fmt.Fprintf(gcode, ";Number of Slices = %v\n", cc.Layers)
 
 	return
 }
@@ -281,6 +283,14 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	exp := &prop.Exposure
 	bot := &prop.Bottom.Exposure
 
+	if exp.LightPWM == 0 {
+		exp.LightPWM = 255
+	}
+
+	if bot.LightPWM == 0 {
+		bot.LightPWM = 255
+	}
+
 	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
 		filename := fmt.Sprintf("%s%04d.png", jobName, n)
 
@@ -344,7 +354,7 @@ G28
 G21 ;Set units to be mm
 G91 ;Relative Positioning
 M17 ;Enable motors
-<Slice> Blank
+;<Slice> Blank
 M106 S0
 `)
 
@@ -361,7 +371,7 @@ M106 S0
 
 		// Create all the layers
 		fmt.Fprintf(gcode, "\n;<Slice> %v\n", n)
-		fmt.Fprintf(gcode, "M106 S255\n;<Delay> %v\n", int(layer.Exposure.LightOnTime*1000.0))
+		fmt.Fprintf(gcode, "M106 S%v\n;<Delay> %v\n", layer.Exposure.LightPWM, int(layer.Exposure.LightOnTime*1000.0))
 		fmt.Fprintf(gcode, "M106 S0\n;<Slice> Blank\n")
 		fmt.Fprintf(gcode, "G1 Z%1.3f F%v\n", layer.Exposure.LiftHeight, int(layer.Exposure.LiftSpeed))
 		priorZ = layer.Z
@@ -520,6 +530,10 @@ func (cws *CWS) Layer(index int) (layer uv3dp.Layer) {
 	layer.Z = cws.properties.LayerZ(index)
 	layer.Image = pngImage.(*image.Gray)
 	layer.Exposure = cws.properties.LayerExposure(index)
+
+	if layer.Exposure.LightPWM == 0 {
+		layer.Exposure.LightPWM = 255
+	}
 
 	return
 }
