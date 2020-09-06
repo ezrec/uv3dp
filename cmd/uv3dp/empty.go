@@ -23,13 +23,13 @@ func NewEmptyFormatter() (ef *EmptyFormatter) {
 		FlagSet: pflag.NewFlagSet("empty", pflag.ContinueOnError),
 	}
 
-	defaultMachine := MachineMap["EPAX-X1"]
-	size := &defaultMachine.Size
+	defaultMachine := uv3dp.MachineFormats["photon"]
+	size := &defaultMachine.Machine.Size
 
 	ef.IntSliceVarP(&ef.Pixels, "pixels", "p", []int{size.X, size.Y}, "Empty size, in pixels")
 	ef.Float32SliceVarP(&ef.Millimeters, "millimeters", "m", []float32{size.Xmm, size.Ymm}, "Empty size, in millimeters")
 
-	ef.StringVarP(&ef.Machine, "machine", "M", "EPAX-X1", "Size preset by machine type")
+	ef.StringVarP(&ef.Machine, "machine", "M", "photon", "Size preset by machine type")
 	ef.SetInterspersed(false)
 
 	return
@@ -40,7 +40,7 @@ func (ef *EmptyFormatter) Decode(file uv3dp.Reader, filesize int64) (printable u
 
 	size := &prop.Size
 
-	msize := MachineMap[ef.Machine].Size
+	msize := uv3dp.MachineFormats[ef.Machine].Machine.Size
 	size.X = msize.X
 	size.Y = msize.Y
 	size.Millimeter.X = msize.Xmm

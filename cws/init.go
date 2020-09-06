@@ -9,8 +9,16 @@ import (
 	"github.com/ezrec/uv3dp"
 )
 
+var (
+	machines_cws = map[string]uv3dp.Machine{
+		"elfin": {Vendor: "Nova3D", Model: "Elfin", Size: uv3dp.MachineSize{1410, 2550, 73.0, 132.0}},
+	}
+)
+
 func init() {
 	newFormatter := func(suffix string) uv3dp.Formatter { return NewCWSFormatter(suffix) }
 
 	uv3dp.RegisterFormatter(".cws", newFormatter)
+
+	uv3dp.RegisterMachines(machines_cws, ".cws")
 }
