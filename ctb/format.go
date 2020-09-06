@@ -111,30 +111,46 @@ type ctbPreview struct {
 }
 
 type ctbLayerDef struct {
-	LayerHeight   float32   // 00:
-	LayerExposure float32   // 04:
-	LayerOffTime  float32   // 08:
-	ImageOffset   uint32    // 0c:
-	ImageLength   uint32    // 10:
-	_             [4]uint32 // 14:
+	LayerHeight   float32 // 00:
+	LayerExposure float32 // 04:
+	LayerOffTime  float32 // 08:
+	ImageOffset   uint32  // 0c:
+	ImageLength   uint32  // 10:
+	Unknown14     uint32  // 14:
+	InfoSize      uint32  // 18: Size of image info
+	Unknown1c     uint32  // 1c:
+	Unknown20     uint32  // 20:
+}
+
+type ctbImageInfo struct {
+	LayerDef     ctbLayerDef // 00:  Repeat of the LayerDef information
+	TotalSize    uint32      // 24:  Total size of ctbImageInfo and Image data
+	LiftHeight   float32     // 28:
+	LiftSpeed    float32     // 2c:
+	Unknown30    uint32      // 30: Zero
+	Unknown34    uint32      // 34: Zero
+	RetractSpeed float32     // 38:
+	Unknown3c    uint32      // 3c: Zero
+	Unknown40    uint32      // 40: Zero
+	Unknown44    uint32      // 44: Zero
+	Unknown48    uint32      // 48: Zero
+	Unknown4c    uint32      // 4c: ??
+	LightPWM     float32     // 50:
 }
 
 type Ctb struct {
 	properties uv3dp.Properties
 	layerDef   []ctbLayerDef
+	imageInfo  [](*ctbImageInfo)
 
 	rleMap map[uint32]([]byte)
-}
-
-func align4(in uint32) (out uint32) {
-	out = (in + 0x3) & 0xfffffffc
-	return
 }
 
 type CtbFormatter struct {
 	*pflag.FlagSet
 
 	EncryptionSeed uint32
+	Version        int
 }
 
 func NewCtbFormatter(suffix string) (cf *CtbFormatter) {
@@ -146,12 +162,18 @@ func NewCtbFormatter(suffix string) (cf *CtbFormatter) {
 	}
 
 	cf.Uint32VarP(&cf.EncryptionSeed, "encryption-seed", "e", 0, "Specify a specific encryption seed")
+	cf.IntVarP(&cf.Version, "version", "v", 2, "Specify the CTB version (2 or 3)")
 
 	return
 }
 
 // Save a uv3dp.Printable in CTB format
 func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
+	if cf.Version < 2 || cf.Version > 3 {
+		err = fmt.Errorf("unsupported version %v", cf.Version)
+		return
+	}
+
 	properties := p.Properties()
 
 	size := &properties.Size
@@ -175,7 +197,7 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	headerBase := uint32(0)
 	header := ctbHeader{
 		Magic:          defaultHeaderMagic,
-		Version:        2,
+		Version:        uint32(cf.Version),
 		EncryptionSeed: seed,
 	}
 	headerSize, _ := restruct.SizeOf(&header)
@@ -235,6 +257,7 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 
 	layerDefBase := machineBase + uint32(machineSize)
 	layerDef := make([]ctbLayerDef, size.Layers)
+	imageInfo := make([]ctbImageInfo, size.Layers)
 	layerDefSize, _ := restruct.SizeOf(&layerDef[0])
 
 	// And then all the layer images
@@ -267,6 +290,12 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 		close(doneMap[n])
 	})
 
+	info_size, _ := restruct.SizeOf(&ctbImageInfo{})
+	imageInfoSize := uint32(info_size)
+	if cf.Version < 3 {
+		imageInfoSize = 0
+	}
+
 	for n := 0; n < size.Layers; n++ {
 		info := <-doneMap[n]
 		if header.EncryptionSeed != 0 {
@@ -275,9 +304,9 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 		}
 		_, ok := rleHash[info.Hash]
 		if !ok {
-			rleHash[info.Hash] = rleInfo{offset: imageBase, rle: info.Rle}
+			rleHash[info.Hash] = rleInfo{offset: imageBase + imageInfoSize, rle: info.Rle}
 			rleHashList = append(rleHashList, info.Hash)
-			imageBase = align4(imageBase + uint32(len(info.Rle)))
+			imageBase = imageBase + imageInfoSize + uint32(len(info.Rle))
 		}
 
 		layerDef[n] = ctbLayerDef{
@@ -286,6 +315,18 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 			LayerOffTime:  info.Exposure.LightOffTime,
 			ImageOffset:   rleHash[info.Hash].offset,
 			ImageLength:   uint32(len(info.Rle)),
+			InfoSize:      imageInfoSize,
+		}
+
+		if imageInfoSize > 0 {
+			imageInfo[n] = ctbImageInfo{
+				LayerDef:     layerDef[n],
+				TotalSize:    uint32(len(info.Rle)) + imageInfoSize,
+				LiftHeight:   info.Exposure.LiftHeight,
+				LiftSpeed:    info.Exposure.LiftSpeed,
+				RetractSpeed: info.Exposure.RetractSpeed,
+				LightPWM:     float32(info.Exposure.LightPWM),
+			}
 		}
 
 		totalOn += uint64(info.BitsOn)
@@ -399,6 +440,13 @@ func (cf *CtbFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 		fileData[int(info.offset)] = info.rle
 	}
 
+	if imageInfoSize > 0 {
+		for _, info := range imageInfo {
+			data, _ := restruct.Pack(binary.LittleEndian, &info)
+			fileData[int(info.LayerDef.ImageOffset-imageInfoSize)] = data
+		}
+	}
+
 	// Sort the file data
 	fileIndex := []int{}
 	for key := range fileData {
@@ -461,6 +509,15 @@ func (cf *CtbFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 		return
 	}
 
+	// ctbSlicer info
+	slicer := ctbSlicer{}
+	if header.SlicerOffset > 0 {
+		err = restruct.Unpack(data[header.SlicerOffset:], binary.LittleEndian, &slicer)
+		if err != nil {
+			return
+		}
+	}
+
 	// Collect previews
 	previewTable := []struct {
 		previewType   uv3dp.PreviewType
@@ -501,6 +558,8 @@ func (cf *CtbFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 
 	layerDef := make([]ctbLayerDef, header.LayerCount)
 
+	imageInfo := make([](*ctbImageInfo), header.LayerCount)
+
 	layerDefSize := uint32(9 * 4)
 	for n := uint32(0); n < header.LayerCount; n++ {
 		offset := header.LayerDefs + layerDefSize*n
@@ -513,6 +572,15 @@ func (cf *CtbFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 		size := layerDef[n].ImageLength
 
 		rleMap[addr] = cipher(seed, n, data[addr:addr+size])
+
+		infoSize := layerDef[n].InfoSize
+		if header.Version >= 3 && infoSize > 0 {
+			info := &ctbImageInfo{}
+			err = restruct.Unpack(data[addr-infoSize:addr], binary.LittleEndian, info)
+			if err != nil {
+				imageInfo[n] = info
+			}
+		}
 	}
 
 	size := &prop.Size
@@ -573,6 +641,7 @@ func (cf *CtbFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 	cbd := &Ctb{
 		properties: prop,
 		layerDef:   layerDef,
+		imageInfo:  imageInfo,
 		rleMap:     rleMap,
 	}
 
@@ -618,6 +687,17 @@ func (cbd *Ctb) Layer(index int) (layer uv3dp.Layer) {
 
 	if layerDef.LayerOffTime > 0.0 {
 		exposure.LightOffTime = layerDef.LayerOffTime
+	}
+
+	// See if we have per-layer overrides
+	info := cbd.imageInfo[index]
+	if info != nil {
+		exposure.LightOnTime = info.LayerDef.LayerExposure
+		exposure.LightOffTime = info.LayerDef.LayerOffTime
+		exposure.LightPWM = uint8(info.LightPWM)
+		exposure.LiftHeight = info.LiftHeight
+		exposure.LiftSpeed = info.LiftSpeed
+		exposure.RetractSpeed = info.RetractSpeed
 	}
 
 	layer = uv3dp.Layer{
