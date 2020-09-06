@@ -154,26 +154,30 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'empty':
     
-      -M, --machine string             Size preset by machine type (default "EPAX-X1")
+      -M, --machine string             Size preset by machine type (default "photon")
       -m, --millimeters float32Slice   Empty size, in millimeters (default [68.040001,120.959999])
       -p, --pixels ints                Empty size, in pixels (default [1440,2560])
     
     Known machines:
     
-        Anycubic-Photon      1440x2560, 68x121 mm
-        Anycubic-Photon-S    1440x2560, 68x121 mm
-        Anycubic-Photon-Zero 480x854, 55.4x98.6 mm
-        Creality-LD-002R     1440x2560, 68x121 mm
-        EPAX-X1              1440x2560, 68x121 mm
-        EPAX-X10             1600x2560, 135x216 mm
-        EPAX-X133            2160x3840, 165x293 mm
-        EPAX-X156            2160x3840, 194x345 mm
-        EPAX-X9              1600x2560, 120x192 mm
-        Elegoo-Mars          1440x2560, 68x121 mm
-        Kelant-S400          2560x1600, 192x120 mm
-        Nova3D-Elfin         1410x2550, 73x132 mm
-        Phrozen-Sonic-Mini   1080x1920, 68x121 mm
-        Zortrax-Inkspire     1440x2560, 72x128 mm
+        elfin                Nova3D Elfin            Size: 1410x2550, 73x132 mm,	Format: .cws 
+        inkspire            Zortrax Inkspire         Size: 1440x2560, 72x128 mm,	Format: .zcodex 
+        ld-002r            Creality LD-002R          Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
+        mars                 Elegoo Mars             Size: 1440x2560, 68x121 mm,	Format: .cbddlp 
+        mars2-pro            Elegoo Mars 2 Pro       Size: 1620x2560, 82.6x131 mm,	Format: .ctb --version=3
+        photon             Anycubic Photon           Size: 1440x2560, 68x121 mm,	Format: .photon 
+        photon0            Anycubic Photon Zero      Size: 480x854, 55.4x98.6 mm,	Format: .pw0 
+        photons            Anycubic Photon S         Size: 1440x2560, 68x121 mm,	Format: .pws 
+        sl1                   Prusa SL1              Size: 1440x2560, 68x121 mm,	Format: .sl1 
+        sonic-mini          Phrozen Sonic Mini       Size: 1080x1920, 68x121 mm,	Format: .phz 
+        x1                     EPAX X1               Size: 1440x2560, 68x121 mm,	Format: .cbddlp 
+        x10                    EPAX X10              Size: 1600x2560, 135x216 mm,	Format: .cbddlp 
+        x10n                   EPAX X10              Size: 1600x2560, 135x216 mm,	Format: .ctb --version=2
+        x133                   EPAX X133             Size: 2160x3840, 165x293 mm,	Format: .cbddlp 
+        x156                   EPAX X156             Size: 2160x3840, 194x345 mm,	Format: .cbddlp 
+        x1k                    EPAX X1K              Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
+        x1n                    EPAX X1N              Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
+        x9                     EPAX X9               Size: 1600x2560, 120x192 mm,	Format: .cbddlp 
     
     Known resins: (from local user ChiTuBox config)
     

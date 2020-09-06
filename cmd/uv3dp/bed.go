@@ -45,12 +45,12 @@ func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err
 	rotate := false
 
 	if bc.Changed("machine") {
-		machine, found := MachineMap[bc.Machine]
+		machine, found := uv3dp.MachineFormats[bc.Machine]
 		if !found {
 			err = fmt.Errorf("machine '%s' is not a known machine type", bc.Machine)
 			return
 		}
-		size := machine.Size
+		size := machine.Machine.Size
 		dstSize.X = size.X
 		dstSize.Y = size.Y
 		dstSize.Millimeter.X = size.Xmm
