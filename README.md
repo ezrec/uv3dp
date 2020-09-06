@@ -119,6 +119,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Options for '.ctb':
     
       -e, --encryption-seed uint32   Specify a specific encryption seed
+      -v, --version int              Specify the CTB version (2 or 3) (default 2)
     
     Options for '.cws':
     
