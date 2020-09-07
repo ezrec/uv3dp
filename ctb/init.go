@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	newFormatter := func(suffix string) (format uv3dp.Formatter) { return NewCtbFormatter(suffix) }
+	newFormatter := func(suffix string) (format uv3dp.Formatter) { return NewFormatter(suffix) }
 
 	uv3dp.RegisterFormatter(".ctb", newFormatter)
 

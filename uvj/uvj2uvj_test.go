@@ -51,15 +51,13 @@ func TestUVJToUVJ(t *testing.T) {
 		t.Fatalf("can't read %v: %v", ReferenceUVJ, err)
 	}
 
-	uvj_prop := uvj_print.Properties()
-	out_prop := out_print.Properties()
-	if uvj_prop.Size != out_prop.Size {
+	if uvj_print.Size() != out_print.Size() {
 		t.Errorf("printables are not the same Size")
 	}
-	if uvj_prop.Bottom != out_prop.Bottom {
+	if uvj_print.Bottom() != out_print.Bottom() {
 		t.Errorf("printables are not the same Bottom exposure")
 	}
-	if uvj_prop.Exposure != out_prop.Exposure {
+	if uvj_print.Exposure() != out_print.Exposure() {
 		t.Errorf("printables are not the same Exposure")
 	}
 
@@ -69,8 +67,8 @@ func TestUVJToUVJ(t *testing.T) {
 	}
 
 	for _, code := range thumbnails {
-		uvj_prev, uvj_ok := uvj_prop.Preview[code]
-		out_prev, out_ok := out_prop.Preview[code]
+		uvj_prev, uvj_ok := uvj_print.Preview(code)
+		out_prev, out_ok := out_print.Preview(code)
 
 		if uvj_ok != out_ok {
 			t.Errorf("%+v: expected present %v, got %v", code, uvj_ok, out_ok)

@@ -40,7 +40,7 @@ func NewBedCommand() (bc *BedCommand) {
 }
 
 func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	srcSize := input.Properties().Size
+	srcSize := input.Size()
 	dstSize := srcSize
 	rotate := false
 
@@ -153,26 +153,21 @@ type bedModifier struct {
 	reflect bool
 }
 
-func (bm *bedModifier) Properties() (prop uv3dp.Properties) {
-	prop = bm.Printable.Properties()
-
-	prop.Size = bm.size
+func (bm *bedModifier) Size() (size uv3dp.Size) {
+	size = bm.size
 
 	return
 }
 
-func (bm *bedModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = bm.Printable.Layer(index)
+func (bm *bedModifier) LayerImage(index int) (newImage *image.Gray) {
+	srcImage := image.Image(bm.Printable.LayerImage(index))
 
 	// Re-bed the layer to the new size
-	newImage := image.NewGray(image.Rect(0, 0, bm.size.X, bm.size.Y))
-
-	var srcImage image.Image
+	newImage = image.NewGray(image.Rect(0, 0, bm.size.X, bm.size.Y))
 
 	reflect := bm.reflect
 
 	// Our trivial rotation also causes a reflection, so invert the reflect operand
-	srcImage = layer.Image
 	if bm.rotate {
 		srcImage = &rotateImage{Image: srcImage}
 		reflect = !reflect
@@ -185,8 +180,6 @@ func (bm *bedModifier) Layer(index int) (layer uv3dp.Layer) {
 	}
 
 	draw.NearestNeighbor.Scale(newImage, bm.dstRect, srcImage, srcImage.Bounds(), draw.Src, nil)
-
-	layer.Image = newImage
 
 	return
 }

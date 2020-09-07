@@ -92,8 +92,8 @@ type ResinMetadata struct {
 }
 
 type Zcodex struct {
-	properties uv3dp.Properties
-	layerPng   []([]byte)
+	uv3dp.Print
+	layerPng []([]byte)
 }
 
 type ZcodexFormat struct {
@@ -113,13 +113,11 @@ func NewZcodexFormatter(suffix string) (sf *ZcodexFormat) {
 }
 
 func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
-	prop := printable.Properties()
-
 	archive := zip.NewWriter(writer)
 	defer archive.Close()
 
 	var rm ResinMetadata
-	anon, ok := prop.Metadata["zcodex/ResinMetadata"]
+	anon, ok := printable.Metadata("zcodex/ResinMetadata")
 	if ok {
 		rmptr, ok := anon.(*ResinMetadata)
 		if ok {
@@ -127,15 +125,19 @@ func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (
 		}
 	}
 
-	rm.LayerThickness = prop.Size.LayerHeight
-	rm.LayerTime = int(prop.Exposure.LightOnTime * 1000.0)
-	rm.BottomLayersTime = int(prop.Bottom.Exposure.LightOnTime * 1000.0)
-	rm.TotalLayersCount = prop.Size.Layers
-	rm.BottomLayersNumber = prop.Bottom.Count
-	rm.BlankingLayerTime = int(prop.Exposure.LightOffTime * 1000.0)
+	size := printable.Size()
+	exposure := printable.Exposure()
+	bottom := printable.Bottom()
+
+	rm.LayerThickness = size.LayerHeight
+	rm.LayerTime = int(exposure.LightOnTime * 1000.0)
+	rm.BottomLayersTime = int(bottom.Exposure.LightOnTime * 1000.0)
+	rm.TotalLayersCount = size.Layers
+	rm.BottomLayersNumber = bottom.Count
+	rm.BlankingLayerTime = int(exposure.LightOffTime * 1000.0)
 
 	var us UserSettingsData
-	anon, ok = prop.Metadata["zcodex/UserSettingsData"]
+	anon, ok = printable.Metadata("zcodex/UserSettingsData")
 	if ok {
 		usptr, ok := anon.(*UserSettingsData)
 		if ok {
@@ -143,24 +145,20 @@ func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (
 		}
 	}
 
-	us.MaxLayer = prop.Size.Layers
-	us.LayerThickness = fmt.Sprintf("%.2g mm", prop.Size.LayerHeight)
-	us.LayerExposureTime = int(prop.Exposure.LightOnTime * 1000.0)
-	us.ExposureOffTime = int(prop.Exposure.LightOffTime * 1000.0)
-	us.BottomLayerExposureTime = int(prop.Bottom.Exposure.LightOnTime * 1000.0)
-	us.BottomLayersCount = prop.Bottom.Count
-	us.ZLiftDistance = prop.Exposure.LiftHeight
-	us.ZLiftRetractRate = prop.Exposure.RetractSpeed
-	us.ZLiftFeedRate = prop.Exposure.LiftSpeed
-
-	size := prop.Size
+	us.MaxLayer = size.Layers
+	us.LayerThickness = fmt.Sprintf("%.2g mm", size.LayerHeight)
+	us.LayerExposureTime = int(exposure.LightOnTime * 1000.0)
+	us.ExposureOffTime = int(exposure.LightOffTime * 1000.0)
+	us.BottomLayerExposureTime = int(bottom.Exposure.LightOnTime * 1000.0)
+	us.BottomLayersCount = bottom.Count
+	us.ZLiftDistance = exposure.LiftHeight
+	us.ZLiftRetractRate = exposure.RetractSpeed
+	us.ZLiftFeedRate = exposure.LiftSpeed
 
 	rm.Layers = make([]ResinMetadataLayer, size.Layers)
 
 	// Create all the layers
 	for n := 0; n < size.Layers; n++ {
-		layer := printable.Layer(n)
-
 		filename := fmt.Sprintf("ResinSlicesData/Slice%05d.png", n)
 
 		writer, err = archive.Create(filename)
@@ -168,7 +166,7 @@ func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (
 			return
 		}
 
-		err = png.Encode(writer, layer.Image)
+		err = png.Encode(writer, printable.LayerImage(n))
 		if err != nil {
 			return
 		}
@@ -199,9 +197,9 @@ func (sf *ZcodexFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (
 	}
 
 	// Save the thumbnails
-	image, ok := prop.Preview[uv3dp.PreviewTypeTiny]
+	image, ok := printable.Preview(uv3dp.PreviewTypeTiny)
 	if !ok {
-		image, ok = prop.Preview[uv3dp.PreviewTypeHuge]
+		image, ok = printable.Preview(uv3dp.PreviewTypeHuge)
 	}
 	if ok {
 		writer, err = archive.Create("Preview.png")
@@ -377,8 +375,8 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 	prop.Metadata["zcodex/ResinMetadata"] = &rm
 
 	zcodex := &Zcodex{
-		properties: prop,
-		layerPng:   layerPng,
+		Print:    uv3dp.Print{Properties: prop},
+		layerPng: layerPng,
 	}
 
 	printable = zcodex
@@ -387,11 +385,6 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 }
 
 func (zcodex *Zcodex) Close() {
-}
-
-func (zcodex *Zcodex) Properties() (prop uv3dp.Properties) {
-	prop = zcodex.properties
-	return
 }
 
 func asGray(in image.Image) (out *image.Gray) {
@@ -407,7 +400,7 @@ func asGray(in image.Image) (out *image.Gray) {
 	return
 }
 
-func (zcodex *Zcodex) Layer(index int) (layer uv3dp.Layer) {
+func (zcodex *Zcodex) LayerImage(index int) (grayImage *image.Gray) {
 	pngImage, err := png.Decode(bytes.NewReader(zcodex.layerPng[index]))
 	if err != nil {
 		panic(err)
@@ -417,10 +410,6 @@ func (zcodex *Zcodex) Layer(index int) (layer uv3dp.Layer) {
 	if !ok {
 		grayImage = asGray(pngImage)
 	}
-
-	layer.Z = zcodex.properties.LayerZ(index)
-	layer.Image = grayImage
-	layer.Exposure = zcodex.properties.LayerExposure(index)
 
 	return
 }

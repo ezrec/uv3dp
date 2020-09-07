@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	newFormatter := func(suffix string) uv3dp.Formatter { return NewCWSFormatter(suffix) }
+	newFormatter := func(suffix string) uv3dp.Formatter { return NewFormatter(suffix) }
 
 	uv3dp.RegisterFormatter(".cws", newFormatter)
 

@@ -249,20 +249,20 @@ type ReadSeekCloser interface {
 	io.Closer
 }
 
-type CWS struct {
-	properties uv3dp.Properties
-	config     cwsConfig
-	layerPng   []([]byte)
+type Print struct {
+	uv3dp.Print
+	config   cwsConfig
+	layerPng []([]byte)
 }
 
-type CWSFormat struct {
+type Format struct {
 	*pflag.FlagSet
 }
 
-func NewCWSFormatter(suffix string) (sf *CWSFormat) {
+func NewFormatter(suffix string) (sf *Format) {
 	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
 
-	sf = &CWSFormat{
+	sf = &Format{
 		FlagSet: flagSet,
 	}
 
@@ -271,17 +271,15 @@ func NewCWSFormatter(suffix string) (sf *CWSFormat) {
 	return
 }
 
-func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
+func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
 	jobName := defaultName
 
 	archive := zip.NewWriter(writer)
 	defer archive.Close()
 
-	prop := printable.Properties()
-
-	size := &prop.Size
-	exp := &prop.Exposure
-	bot := &prop.Bottom.Exposure
+	size := printable.Size()
+	exp := printable.Exposure()
+	bot := printable.Bottom().Exposure
 
 	if exp.LightPWM == 0 {
 		exp.LightPWM = 255
@@ -291,7 +289,7 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		bot.LightPWM = 255
 	}
 
-	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
+	uv3dp.WithEachLayer(printable, func(p uv3dp.Printable, n int) {
 		filename := fmt.Sprintf("%s%04d.png", jobName, n)
 
 		var writer io.Writer
@@ -300,7 +298,7 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 			return
 		}
 
-		err = png.Encode(writer, layer.Image)
+		err = png.Encode(writer, p.LayerImage(n))
 		if err != nil {
 			return
 		}
@@ -322,7 +320,7 @@ func (sf *CWSFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		LayerTime:           int(exp.LightOnTime * 1000.0),
 		OutlineWidthInset:   2,
 		BottomLayersTime:    int(bot.LightOnTime * 1000.0),
-		BottomLayers:        prop.Bottom.Count,
+		BottomLayers:        printable.Bottom().Count,
 		BlankingLayerTime:   int(exp.LightOffTime * 1000.0),
 		BuildDirection:      "Bottom_Up",
 		LiftDistance:        int(exp.LiftHeight),
@@ -361,20 +359,21 @@ M106 S0
 	// Create all the layer movement gcode
 	priorZ := float32(0.0)
 	for n := 0; n < size.Layers; n++ {
-		layer := printable.Layer(n)
+		layerZ := printable.LayerZ(n)
+		layerExposure := printable.LayerExposure(n)
 		if n > 0 {
-			thickness := layer.Z - priorZ
-			fmt.Fprintf(gcode, "G1 Z%1.3f F%v\n", -(layer.Exposure.LiftHeight - thickness), int(layer.Exposure.LiftSpeed))
+			thickness := layerZ - priorZ
+			fmt.Fprintf(gcode, "G1 Z%1.3f F%v\n", -(layerExposure.LiftHeight - thickness), int(layerExposure.LiftSpeed))
 			// This is just a guess here
-			fmt.Fprintf(gcode, ";<Delay> %v\n", 720000/int(layer.Exposure.LiftSpeed))
+			fmt.Fprintf(gcode, ";<Delay> %v\n", 720000/int(layerExposure.LiftSpeed))
 		}
 
 		// Create all the layers
 		fmt.Fprintf(gcode, "\n;<Slice> %v\n", n)
-		fmt.Fprintf(gcode, "M106 S%v\n;<Delay> %v\n", layer.Exposure.LightPWM, int(layer.Exposure.LightOnTime*1000.0))
+		fmt.Fprintf(gcode, "M106 S%v\n;<Delay> %v\n", layerExposure.LightPWM, int(layerExposure.LightOnTime*1000.0))
 		fmt.Fprintf(gcode, "M106 S0\n;<Slice> Blank\n")
-		fmt.Fprintf(gcode, "G1 Z%1.3f F%v\n", layer.Exposure.LiftHeight, int(layer.Exposure.LiftSpeed))
-		priorZ = layer.Z
+		fmt.Fprintf(gcode, "G1 Z%1.3f F%v\n", layerExposure.LiftHeight, int(layerExposure.LiftSpeed))
+		priorZ = layerZ
 	}
 
 	// Emit the GCode trailer
@@ -387,7 +386,7 @@ M106 S0
 	return
 }
 
-func (sf *CWSFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
+func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	archive, err := zip.NewReader(reader, filesize)
 	if err != nil {
 		return
@@ -503,9 +502,9 @@ func (sf *CWSFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	bot.LiftSpeed = exp.LiftSpeed
 	bot.RetractSpeed = exp.RetractSpeed
 
-	cws := &CWS{
-		properties: prop,
-		layerPng:   layerPng,
+	cws := &Print{
+		Print:    uv3dp.Print{Properties: prop},
+		layerPng: layerPng,
 	}
 
 	printable = cws
@@ -513,27 +512,15 @@ func (sf *CWSFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	return
 }
 
-func (cws *CWS) Close() {
+func (cws *Print) Close() {
 }
 
-func (cws *CWS) Properties() (prop uv3dp.Properties) {
-	prop = cws.properties
-	return
-}
-
-func (cws *CWS) Layer(index int) (layer uv3dp.Layer) {
+func (cws *Print) LayerImage(index int) (imageGray *image.Gray) {
 	pngImage, err := png.Decode(bytes.NewReader(cws.layerPng[index]))
 	if err != nil {
 		panic(err)
 	}
-
-	layer.Z = cws.properties.LayerZ(index)
-	layer.Image = pngImage.(*image.Gray)
-	layer.Exposure = cws.properties.LayerExposure(index)
-
-	if layer.Exposure.LightPWM == 0 {
-		layer.Exposure.LightPWM = 255
-	}
+	imageGray = pngImage.(*image.Gray)
 
 	return
 }

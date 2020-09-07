@@ -43,13 +43,19 @@ func (e ErrConfigInvalid) Error() string {
 	return fmt.Sprintf("config.ini: Parameter '%s' invalid", string(e))
 }
 
+type UVJLayer struct {
+	Z        float32
+	Exposure uv3dp.Exposure
+}
+
 type UVJConfig struct {
 	Properties uv3dp.Properties
-	Layers     []uv3dp.Layer
+	Layers     []UVJLayer
 }
 
 type UVJ struct {
-	Config   UVJConfig
+	uv3dp.Print
+	Layers   []UVJLayer
 	layerPng []([]byte)
 }
 
@@ -73,11 +79,11 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	archive := zip.NewWriter(writer)
 	defer archive.Close()
 
-	prop := printable.Properties()
-
-	// Don't encode the preview images into the config file
-	preview := prop.Preview
-	prop.Preview = nil
+	prop := uv3dp.Properties{
+		Size:     printable.Size(),
+		Exposure: printable.Exposure(),
+		Bottom:   printable.Bottom(),
+	}
 
 	// If LightPWM is set to 255, don't encode it
 	if prop.Exposure.LightPWM == 255 {
@@ -89,11 +95,11 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 
 	config := UVJConfig{
 		Properties: prop,
-		Layers:     make([]uv3dp.Layer, prop.Size.Layers),
+		Layers:     make([]UVJLayer, prop.Size.Layers),
 	}
 
 	// Create all the layers
-	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
+	uv3dp.WithEachLayer(printable, func(p uv3dp.Printable, n int) {
 		filename := fmt.Sprintf("slice/%08d.png", n)
 
 		var writer io.Writer
@@ -102,18 +108,22 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 			return
 		}
 
-		err = png.Encode(writer, layer.Image)
+		err = png.Encode(writer, p.LayerImage(n))
 		if err != nil {
 			return
 		}
 
+		exposure := p.LayerExposure(n)
+
 		// Trigger the JSON 'omitdefault' as needed
-		if layer.Exposure.LightPWM == 255 {
-			layer.Exposure.LightPWM = 0
+		if exposure.LightPWM == 255 {
+			exposure.LightPWM = 0
 		}
 
-		layer.Image = nil
-		config.Layers[n] = layer
+		config.Layers[n] = UVJLayer{
+			Z:        p.LayerZ(n),
+			Exposure: exposure,
+		}
 	})
 
 	// Create the config file
@@ -131,16 +141,23 @@ func (sf *UVJFormat) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	fileConfig.Write([]byte("\n"))
 
 	// Save the thumbnails
-	for code, image := range preview {
-		imageSize := image.Bounds().Size()
+	preview := []uv3dp.PreviewType{
+		uv3dp.PreviewTypeTiny,
+		uv3dp.PreviewTypeHuge,
+	}
+
+	for _, code := range preview {
+		image, ok := printable.Preview(code)
+		if !ok {
+			continue
+		}
+
 		var name string
 		switch code {
 		case uv3dp.PreviewTypeTiny:
 			name = "tiny"
 		case uv3dp.PreviewTypeHuge:
 			name = "huge"
-		default:
-			name = fmt.Sprintf("%dx%d", imageSize.X, imageSize.Y)
 		}
 
 		filename := "preview/" + name + ".png"
@@ -261,7 +278,8 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	config.Properties.Preview = thumbImage
 
 	uvj := &UVJ{
-		Config:   config,
+		Print:    uv3dp.Print{Properties: config.Properties},
+		Layers:   config.Layers,
 		layerPng: layerPng,
 	}
 
@@ -273,26 +291,33 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 func (uvj *UVJ) Close() {
 }
 
-func (uvj *UVJ) Properties() (prop uv3dp.Properties) {
-	prop = uvj.Config.Properties
+func (uvj *UVJ) LayerZ(index int) (z float32) {
+	if len(uvj.Layers) == 0 {
+		z = uvj.Print.LayerZ(index)
+	} else {
+		z = uvj.Layers[index].Z
+	}
+
 	return
 }
 
-func (uvj *UVJ) Layer(index int) (layer uv3dp.Layer) {
+func (uvj *UVJ) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	if len(uvj.Layers) == 0 {
+		exposure = uvj.Print.LayerExposure(index)
+	} else {
+		exposure = uvj.Layers[index].Exposure
+	}
+
+	return
+}
+
+func (uvj *UVJ) Image(index int) (layerImage *image.Gray) {
 	pngImage, err := png.Decode(bytes.NewReader(uvj.layerPng[index]))
 	if err != nil {
 		err = fmt.Errorf("Layer %v: %w", index, err)
 		panic(err)
 	}
 
-	if len(uvj.Config.Layers) == 0 {
-		layer = uv3dp.Layer{
-			Z:        uvj.Config.Properties.LayerZ(index),
-			Exposure: uvj.Config.Properties.LayerExposure(index),
-		}
-	} else {
-		layer = uvj.Config.Layers[index]
-	}
 	layerImage, ok := pngImage.(*image.Gray)
 	if !ok {
 		layerImage = image.NewGray(pngImage.Bounds())
@@ -302,8 +327,6 @@ func (uvj *UVJ) Layer(index int) (layer uv3dp.Layer) {
 			}
 		}
 	}
-
-	layer.Image = layerImage
 
 	return
 }

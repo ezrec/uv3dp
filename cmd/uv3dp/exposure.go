@@ -35,33 +35,31 @@ func NewExposureCommand() (cmd *ExposureCommand) {
 type exposureModifier struct {
 	uv3dp.Printable
 
-	Exposure    uv3dp.Exposure
-	BottomCount int
+	exposure uv3dp.Exposure
 }
 
-func (mod *exposureModifier) Properties() (prop uv3dp.Properties) {
-	prop = mod.Printable.Properties()
-
+func (mod *exposureModifier) Exposure() (exposure uv3dp.Exposure) {
 	// Set the normal exposure
-	prop.Exposure = mod.Exposure
+	exposure = mod.exposure
 
 	return
 }
 
-func (mod *exposureModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = mod.Printable.Layer(index)
+func (mod *exposureModifier) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	exp := mod.exposure
+	bot := mod.Printable.Bottom()
 
-	if index >= mod.BottomCount {
-		layer.Exposure = mod.Exposure
+	if index < bot.Count {
+		exposure = mod.Printable.LayerExposure(index)
+	} else {
+		exposure = exp
 	}
 
 	return
 }
 
 func (cmd *ExposureCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err error) {
-	prop := input.Properties()
-
-	exp := prop.Exposure
+	exp := input.Exposure()
 
 	if cmd.Changed("light-on") {
 		TraceVerbosef(VerbosityNotice, "  Setting default exposure time to %v", cmd.LightOnTime)
@@ -79,9 +77,8 @@ func (cmd *ExposureCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, 
 	}
 
 	mod = &exposureModifier{
-		Printable:   input,
-		Exposure:    exp,
-		BottomCount: prop.Bottom.Count,
+		Printable: input,
+		exposure:  exp,
 	}
 
 	return

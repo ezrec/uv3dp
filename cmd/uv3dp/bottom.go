@@ -41,32 +41,30 @@ func NewBottomCommand() (cmd *BottomCommand) {
 
 type bottomModifier struct {
 	uv3dp.Printable
-	Bottom uv3dp.Bottom
+	bottom uv3dp.Bottom
 }
 
-func (mod *bottomModifier) Properties() (prop uv3dp.Properties) {
-	prop = mod.Printable.Properties()
-
+func (mod *bottomModifier) Bottom() (bottom uv3dp.Bottom) {
 	// Set the bottom exposure
-	prop.Bottom = mod.Bottom
+	bottom = mod.bottom
 
 	return
 }
 
-func (mod *bottomModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = mod.Printable.Layer(index)
+func (mod *bottomModifier) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	bot := mod.bottom
 
-	if index < mod.Bottom.Count {
-		layer.Exposure = mod.Bottom.Exposure
+	if index < bot.Count {
+		exposure = bot.Exposure
+	} else {
+		exposure = mod.Printable.LayerExposure(index)
 	}
 
 	return
 }
 
 func (cmd *BottomCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	prop := input.Properties()
-
-	bot := prop.Bottom
+	bot := input.Bottom()
 
 	if cmd.Changed("count") {
 		TraceVerbosef(VerbosityNotice, "  Setting default bottom layer count %v", cmd.Count)
@@ -100,7 +98,7 @@ func (cmd *BottomCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable,
 
 	mod := &bottomModifier{
 		Printable: input,
-		Bottom:    bot,
+		bottom:    bot,
 	}
 
 	output = mod

@@ -8,25 +8,24 @@ import (
 	"image"
 	"runtime"
 	"sync"
+	"time"
 )
 
-// Everything needed to print a single layer
-type Layer struct {
-	Z        float32     // Z height in mm
-	Exposure Exposure    // Layer exposure settings
-	Image    *image.Gray `json:",omitempty"` // Image mask
-}
-
 type Printable interface {
-	Properties() (prop Properties)
-	Layer(index int) (layer Layer)
+	Size() Size
+	Exposure() Exposure
+	Bottom() Bottom
+	Preview(index PreviewType) (image.Image, bool)
+	MetadataKeys() []string
+	Metadata(key string) (data interface{}, ok bool)
+	LayerZ(index int) float32
+	LayerExposure(index int) Exposure
+	LayerImage(index int) *image.Gray
 }
 
 // WithAllLayers executes a function in parallel over all of the layers
-func WithAllLayers(p Printable, do func(n int, layer Layer)) {
-	prop := p.Properties()
-
-	layers := prop.Size.Layers
+func WithAllLayers(p Printable, do func(p Printable, n int)) {
+	layers := p.Size().Layers
 
 	prog := NewProgress(layers)
 	defer prog.Close()
@@ -34,11 +33,9 @@ func WithAllLayers(p Printable, do func(n int, layer Layer)) {
 	guard := make(chan struct{}, runtime.GOMAXPROCS(0))
 	for n := 0; n < layers; n++ {
 		guard <- struct{}{}
-		go func(p Printable, do func(n int, layer Layer), n int) {
-			layer := p.Layer(n)
-			do(n, layer)
+		go func(p Printable, do func(p Printable, n int), n int) {
+			do(p, n)
 			prog.Indicate()
-			layer.Image = nil
 			runtime.GC()
 			<-guard
 		}(p, do, n)
@@ -46,12 +43,24 @@ func WithAllLayers(p Printable, do func(n int, layer Layer)) {
 }
 
 // WithEachLayer executes a function in over all of the layers, serially (but possibly out of order)
-func WithEachLayer(p Printable, do func(n int, layer Layer)) {
+func WithEachLayer(p Printable, do func(p Printable, n int)) {
 	var mutex sync.Mutex
 
-	WithAllLayers(p, func(n int, layer Layer) {
+	WithAllLayers(p, func(p Printable, n int) {
 		mutex.Lock()
-		do(n, layer)
+		do(p, n)
 		mutex.Unlock()
 	})
+}
+
+// Get the total print time for a printable
+func PrintDuration(p Printable) (duration time.Duration) {
+	layers := p.Size().Layers
+
+	for n := 0; n < layers; n++ {
+		exposure := p.LayerExposure(n)
+		duration += exposure.Duration()
+	}
+
+	return
 }

@@ -9,6 +9,7 @@ import (
 	"image"
 	"io/ioutil"
 	"sort"
+	"time"
 
 	"encoding/binary"
 
@@ -98,24 +99,24 @@ type phzLayerDef struct {
 	_             [4]uint32 // 14:
 }
 
-type Phz struct {
-	properties uv3dp.Properties
-	layerDef   []phzLayerDef
+type Print struct {
+	uv3dp.Print
+	layerDef []phzLayerDef
 
 	rleMap map[uint32]([]byte)
 }
 
-type PhzFormatter struct {
+type Formatter struct {
 	*pflag.FlagSet
 
 	EncryptionSeed uint32
 }
 
-func NewPhzFormatter(suffix string) (pf *PhzFormatter) {
+func NewFormatter(suffix string) (pf *Formatter) {
 	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
 	flagSet.SetInterspersed(false)
 
-	pf = &PhzFormatter{
+	pf = &Formatter{
 		FlagSet: flagSet,
 	}
 
@@ -125,12 +126,10 @@ func NewPhzFormatter(suffix string) (pf *PhzFormatter) {
 }
 
 // Save a uv3dp.Printable in CBD DLP format
-func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
-	properties := p.Properties()
-
-	size := &properties.Size
-	exp := &properties.Exposure
-	bot := &properties.Bottom
+func (pf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
+	size := printable.Size()
+	exp := printable.Exposure()
+	bot := printable.Bottom()
 
 	// First, compute the rle images
 	type rleInfo struct {
@@ -160,7 +159,7 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	rleHashList := []uint64{}
 
 	savePreview := func(base uint32, preview *phzPreview, ptype uv3dp.PreviewType) uint32 {
-		pic, found := properties.Preview[ptype]
+		pic, found := printable.Preview(ptype)
 		if !found {
 			return base
 		}
@@ -218,11 +217,11 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 		doneMap[n] = make(chan layerInfo, 1)
 	}
 
-	uv3dp.WithAllLayers(p, func(n int, layer uv3dp.Layer) {
-		rle, hash, bitsOn := rleEncodeGraymap(layer.Image)
+	uv3dp.WithAllLayers(printable, func(p uv3dp.Printable, n int) {
+		rle, hash, bitsOn := rleEncodeGraymap(p.LayerImage(n))
 		doneMap[n] <- layerInfo{
-			Z:        layer.Z,
-			Exposure: layer.Exposure,
+			Z:        p.LayerZ(n),
+			Exposure: p.LayerExposure(n),
 			Rle:      rle,
 			Hash:     hash,
 			BitsOn:   bitsOn,
@@ -270,7 +269,7 @@ func (pf *PhzFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err erro
 	header.LayerDefs = layerDefBase
 	header.LayerCount = uint32(size.Layers)
 	header.PreviewLow = previewTinyBase
-	header.PrintTime = uint32(properties.Duration())
+	header.PrintTime = uint32(uv3dp.PrintDuration(printable) / time.Second)
 	header.Projector = 1 // LCD_X_MIRROR
 
 	header.AntiAliasLevel = 1
@@ -386,7 +385,7 @@ func cipher(seed uint32, slice uint32, in []byte) (out []byte) {
 	return
 }
 
-func (pf *PhzFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
+func (pf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -494,10 +493,10 @@ func (pf *PhzFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 	exp.RetractSpeed = header.RetractSpeed
 	exp.RetractHeight = defaultRetractHeight
 
-	phz := &Phz{
-		properties: prop,
-		layerDef:   layerDef,
-		rleMap:     rleMap,
+	phz := &Print{
+		Print:    uv3dp.Print{Properties: prop},
+		layerDef: layerDef,
+		rleMap:   rleMap,
 	}
 
 	printable = phz
@@ -505,36 +504,23 @@ func (pf *PhzFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3
 	return
 }
 
-// Properties get the properties of the Phz Printable
-func (phz *Phz) Properties() (prop uv3dp.Properties) {
-	prop = phz.properties
-
-	return
-}
-
 // Layer gets a layer - we decode from the RLE on-the fly
-func (phz *Phz) Layer(index int) (layer uv3dp.Layer) {
-	if index < 0 || index >= len(phz.layerDef) {
-		return
-	}
-
+func (phz *Print) LayerImage(index int) (layerImage *image.Gray) {
 	layerDef := phz.layerDef[index]
 
 	// Update per-layer info
-	prop := &phz.properties
-	size := &prop.Size
-	bounds := image.Rect(0, 0, size.X, size.Y)
-	layerImage, err := rleDecodeGraymap(bounds, phz.rleMap[layerDef.ImageOffset])
+	layerImage, err := rleDecodeGraymap(phz.Bounds(), phz.rleMap[layerDef.ImageOffset])
 	if err != nil {
 		panic(err)
 	}
 
-	var exposure uv3dp.Exposure
-	if index < prop.Bottom.Count {
-		exposure = prop.Bottom.Exposure
-	} else {
-		exposure = prop.Exposure
-	}
+	return
+}
+
+func (phz *Print) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	layerDef := phz.layerDef[index]
+
+	exposure = phz.Print.LayerExposure(index)
 
 	if layerDef.LayerExposure > 0.0 {
 		exposure.LightOnTime = layerDef.LayerExposure
@@ -544,11 +530,10 @@ func (phz *Phz) Layer(index int) (layer uv3dp.Layer) {
 		exposure.LightOffTime = layerDef.LayerOffTime
 	}
 
-	layer = uv3dp.Layer{
-		Z:        layerDef.LayerHeight,
-		Image:    layerImage,
-		Exposure: exposure,
-	}
+	return
+}
 
+func (phz *Print) LayerZ(index int) (z float32) {
+	z = phz.layerDef[index].LayerHeight
 	return
 }

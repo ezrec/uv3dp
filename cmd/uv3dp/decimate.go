@@ -33,8 +33,8 @@ func NewDecimateCommand() (cmd *DecimateCommand) {
 }
 
 func (cmd *DecimateCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	layers := input.Properties().Size.Layers
-	botCount := input.Properties().Bottom.Count
+	layers := input.Size().Layers
+	botCount := input.Bottom().Count
 
 	if cmd.Bottom > 0 {
 		dec := uv3dp.NewDecimatedPrintable(input)
