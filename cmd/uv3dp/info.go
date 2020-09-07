@@ -43,6 +43,15 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 		fmt.Printf("Layers: %v, %vx%v slices, %.2f x %.2f x %.2f mm bed required\n",
 			size.Layers, size.X, size.Y,
 			size.Millimeter.X, size.Millimeter.Y, float32(size.Layers)*size.LayerHeight)
+		exposureTime := time.Duration(0)
+		for n := 0; n < size.Layers; n++ {
+			exposureTime += time.Duration(input.LayerExposure(n).LightOnTime * float32(time.Second))
+		}
+		exposureTime = exposureTime.Truncate(time.Second)
+		totalTime := uv3dp.PrintDuration(input).Truncate(time.Second)
+
+		fmt.Printf("Total time: %v (%v exposure, %v motion)\n",
+			totalTime, exposureTime, totalTime-exposureTime)
 	}
 
 	if info.ExposureSummary {
