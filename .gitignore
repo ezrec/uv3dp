@@ -3,12 +3,15 @@
 *.ctb
 *.cws
 *.gf
+*.lgs
+*.lgs30
 *.photon
 *.phz
 *.png
 *.pw0
 *.pws
 *.sl1
+*.stl
 *.swp
 *.uvj
 *.zip
