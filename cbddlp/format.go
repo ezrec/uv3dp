@@ -9,6 +9,7 @@ import (
 	"image"
 	"io/ioutil"
 	"sort"
+	"time"
 
 	"encoding/binary"
 
@@ -96,9 +97,9 @@ type cbddlpLayerDef struct {
 	_             [4]uint32 // 14:
 }
 
-type CbdDlp struct {
-	properties uv3dp.Properties
-	layerDef   []cbddlpLayerDef
+type Print struct {
+	uv3dp.Print
+	layerDef []cbddlpLayerDef
 
 	rleMap map[uint32]([]([]byte))
 }
@@ -108,14 +109,14 @@ func align4(in uint32) (out uint32) {
 	return
 }
 
-type CbddlpFormatter struct {
+type Formatter struct {
 	*pflag.FlagSet
 
 	Version   int // Version of file to use, one of [1,2]
 	AntiAlias int // AntiAlias level, one of [1,2,4,8]
 }
 
-func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
+func NewFormatter(suffix string) (cf *Formatter) {
 	var version int
 	var antialias int
 
@@ -134,7 +135,7 @@ func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
 	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
 	flagSet.SetInterspersed(false)
 
-	cf = &CbddlpFormatter{
+	cf = &Formatter{
 		FlagSet:   flagSet,
 		Version:   version,
 		AntiAlias: antialias,
@@ -147,7 +148,7 @@ func NewCbddlpFormatter(suffix string) (cf *CbddlpFormatter) {
 }
 
 // Save a uv3dp.Printable in CBD DLP format
-func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
+func (cf *Formatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
 	switch cf.Version {
 	case 1:
 		if cf.AntiAlias != 1 {
@@ -164,11 +165,9 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		return
 	}
 
-	properties := p.Properties()
-
-	size := &properties.Size
-	exp := &properties.Exposure
-	bot := &properties.Bottom
+	size := p.Size()
+	exp := p.Exposure()
+	bot := p.Bottom()
 
 	// First, compute the rle images
 	type rleInfo struct {
@@ -193,7 +192,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	rleHashList := []uint64{}
 
 	savePreview := func(base uint32, preview *cbddlpPreview, ptype uv3dp.PreviewType) uint32 {
-		pic, found := properties.Preview[ptype]
+		pic, found := p.Preview(ptype)
 		if !found {
 			return base
 		}
@@ -256,12 +255,12 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 		doneMap[n] = make(chan layerInfo, cf.AntiAlias)
 	}
 
-	uv3dp.WithAllLayers(p, func(n int, layer uv3dp.Layer) {
+	uv3dp.WithAllLayers(p, func(p uv3dp.Printable, n int) {
 		for bit := 0; bit < cf.AntiAlias; bit++ {
-			rle, hash, bitsOn := rleEncodeBitmap(layer.Image, bit, cf.AntiAlias)
+			rle, hash, bitsOn := rleEncodeBitmap(p.LayerImage(n), bit, cf.AntiAlias)
 			doneMap[n] <- layerInfo{
-				Z:        layer.Z,
-				Exposure: layer.Exposure,
+				Z:        p.LayerZ(n),
+				Exposure: p.LayerExposure(n),
 				Rle:      rle,
 				Hash:     hash,
 				BitsOn:   bitsOn,
@@ -307,7 +306,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	header.LayerDefs = layerDefBase
 	header.LayerCount = uint32(size.Layers)
 	header.PreviewLow = previewTinyBase
-	header.PrintTime = uint32(properties.Duration())
+	header.PrintTime = uint32(uv3dp.PrintDuration(p) / time.Second)
 	header.Projector = 1 // LCD_X_MIRROR
 
 	if header.Version >= 2 {
@@ -409,7 +408,7 @@ func (cf *CbddlpFormatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err e
 	return
 }
 
-func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
+func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -563,10 +562,10 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 		exp.RetractHeight = defaultRetractHeight
 	}
 
-	cbd := &CbdDlp{
-		properties: prop,
-		layerDef:   layerDef,
-		rleMap:     rleMap,
+	cbd := &Print{
+		Print:    uv3dp.Print{Properties: prop},
+		layerDef: layerDef,
+		rleMap:   rleMap,
 	}
 
 	printable = cbd
@@ -574,36 +573,16 @@ func (cf *CbddlpFormatter) Decode(file uv3dp.Reader, filesize int64) (printable 
 	return
 }
 
-// Properties get the properties of the CbdDlp Printable
-func (cbd *CbdDlp) Properties() (prop uv3dp.Properties) {
-	prop = cbd.properties
-
+// Layer gets a layer - we decode from the RLE on-the fly
+func (cbd *Print) LayerZ(index int) (z float32) {
+	z = cbd.layerDef[index].LayerHeight
 	return
 }
 
-// Layer gets a layer - we decode from the RLE on-the fly
-func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
-	if index < 0 || index >= len(cbd.layerDef) {
-		return
-	}
-
+func (cbd *Print) LayerExposure(index int) (exposure uv3dp.Exposure) {
 	layerDef := cbd.layerDef[index]
 
-	// Update per-layer info
-	prop := &cbd.properties
-	size := &prop.Size
-	bounds := image.Rect(0, 0, size.X, size.Y)
-	layerImage, err := rleDecodeBitmaps(bounds, cbd.rleMap[layerDef.ImageOffset])
-	if err != nil {
-		panic(err)
-	}
-
-	var exposure uv3dp.Exposure
-	if index < prop.Bottom.Count {
-		exposure = prop.Bottom.Exposure
-	} else {
-		exposure = prop.Exposure
-	}
+	exposure = cbd.Print.LayerExposure(index)
 
 	if layerDef.LayerExposure > 0.0 {
 		exposure.LightOnTime = layerDef.LayerExposure
@@ -613,10 +592,16 @@ func (cbd *CbdDlp) Layer(index int) (layer uv3dp.Layer) {
 		exposure.LightOffTime = layerDef.LayerOffTime
 	}
 
-	layer = uv3dp.Layer{
-		Z:        layerDef.LayerHeight,
-		Image:    layerImage,
-		Exposure: exposure,
+	return
+}
+
+func (cbd *Print) LayerImage(index int) (layerImage *image.Gray) {
+	layerDef := cbd.layerDef[index]
+
+	// Update per-layer info
+	layerImage, err := rleDecodeBitmaps(cbd.Bounds(), cbd.rleMap[layerDef.ImageOffset])
+	if err != nil {
+		panic(err)
 	}
 
 	return

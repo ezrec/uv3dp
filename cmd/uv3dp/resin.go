@@ -35,39 +35,37 @@ type resinModifier struct {
 	Resin
 }
 
-func (mod *resinModifier) Properties() (prop uv3dp.Properties) {
-	prop = mod.Printable.Properties()
-
-	// Set the bottom and normal resin from the resins
-	prop.Bottom = mod.Resin.Bottom
-	prop.Exposure = mod.Resin.Exposure
+func (mod *resinModifier) Exposure() (exposure uv3dp.Exposure) {
+	exposure = mod.Resin.Exposure
 
 	return
 }
 
-func (mod *resinModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = mod.Printable.Layer(index)
+func (mod *resinModifier) Bottom() (bottom uv3dp.Bottom) {
+	bottom = mod.Resin.Bottom
 
+	return
+}
+
+func (mod *resinModifier) LayerExposure(index int) (exposure uv3dp.Exposure) {
 	exp := mod.Resin.Exposure
 	bot := mod.Resin.Bottom.Exposure
 	bottomCount := mod.Resin.Bottom.Count
 
 	if index < bottomCount {
-		layer.Exposure = bot
+		exposure = bot
 	} else {
-		layer.Exposure = exp
+		exposure = exp
 	}
 
 	return
 }
 
 func (cmd *ResinCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err error) {
-	prop := input.Properties()
-
 	// Clone the resin defaults from the source printable
 	resin := &Resin{
-		Exposure: prop.Exposure,
-		Bottom:   prop.Bottom,
+		Exposure: input.Exposure(),
+		Bottom:   input.Bottom(),
 	}
 
 	if cmd.Changed("type") {

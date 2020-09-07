@@ -7,6 +7,7 @@ package uv3dp
 import (
 	"image"
 	"math"
+	"time"
 )
 
 type SizeMillimeter struct {
@@ -32,12 +33,15 @@ type Exposure struct {
 }
 
 // Total duration of an exposure
-func (exp *Exposure) Duration() (total float32) {
-	total = exp.LightOnTime + exp.LightOffTime
+func (exp *Exposure) Duration() (total time.Duration) {
+	totalSec := exp.LightOnTime + exp.LightOffTime
 
 	// Motion is lift; then retract -> move back to start at retract speed
-	total += exp.LiftHeight / exp.LiftSpeed
-	total += (exp.LiftHeight + exp.RetractHeight*2) / exp.RetractSpeed
+	totalSec += exp.LiftHeight / exp.LiftSpeed * 60
+	totalSec += (exp.LiftHeight + exp.RetractHeight*2) / exp.RetractSpeed * 60
+
+	total = time.Duration(totalSec * float32(time.Second))
+
 	return
 }
 
@@ -89,38 +93,36 @@ func (prop *Properties) GetMetadataUint8(attr string, defValue uint8) (value uin
 	return
 }
 
+func (prop *Properties) MetadataKeys() (keys []string) {
+	for key := range prop.Metadata {
+		keys = append(keys, key)
+	}
+
+	return
+}
+
 // Get image bounds
 func (prop *Properties) Bounds() image.Rectangle {
 	return image.Rect(0, 0, prop.Size.X, prop.Size.Y)
 }
 
-// Duration returns total printing time
-func (prop *Properties) Duration() (duration float32) {
-	size := &prop.Size
-	bot := &prop.Bottom.Exposure
-	botCount := prop.Bottom.Count
-	exp := &prop.Exposure
-	botTime := bot.Duration() * float32(botCount)
-	expTime := exp.Duration() * float32(size.Layers-int(botCount))
-
-	duration = botTime + expTime
-
-	return
-}
-
-// LayerExposure gets the default exposure by layer index
+// Exposure gets the default exposure by layer index
 func (prop *Properties) LayerExposure(index int) (exposure Exposure) {
 	if index >= prop.Bottom.Count {
 		exposure = prop.Exposure
-		return
+	} else {
+		exposure = prop.Bottom.Exposure
 	}
 
-	exposure = prop.Bottom.Exposure
+	// Validate LightPWM
+	if exposure.LightPWM == 0 {
+		exposure.LightPWM = 255
+	}
 
 	return
 }
 
-// LayerZ get the default Z height at a layer index
+// Z get the default Z height at a layer index
 func (prop *Properties) LayerZ(index int) (z float32) {
 	return float32(math.Round(float64(prop.Size.LayerHeight)*float64(index+1)*100) / 100.0)
 }

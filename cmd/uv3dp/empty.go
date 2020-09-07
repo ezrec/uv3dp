@@ -56,7 +56,7 @@ func (ef *EmptyFormatter) Decode(file uv3dp.Reader, filesize int64) (printable u
 		size.Millimeter.Y = ef.Millimeters[1]
 	}
 
-	printable = uv3dp.NewEmptyPrintable(prop)
+	printable = &uv3dp.Print{Properties: prop}
 
 	return
 }

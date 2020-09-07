@@ -5,6 +5,8 @@
 package main
 
 import (
+	"image"
+
 	"github.com/spf13/pflag"
 
 	"github.com/ezrec/uv3dp"
@@ -40,21 +42,27 @@ type SelectPrintable struct {
 	count int
 }
 
-func (sp *SelectPrintable) Layer(index int) (layer uv3dp.Layer) {
-	layer = sp.Printable.Layer(index + sp.first)
-
-	return
+func (sp *SelectPrintable) LayerZ(index int) float32 {
+	return sp.Printable.LayerZ(index + sp.first)
 }
 
-func (sp *SelectPrintable) Properties() (prop uv3dp.Properties) {
-	prop = sp.Printable.Properties()
-	prop.Size.Layers = sp.count
+func (sp *SelectPrintable) LayerExposure(index int) uv3dp.Exposure {
+	return sp.Printable.LayerExposure(index + sp.first)
+}
+
+func (sp *SelectPrintable) LayerImage(index int) *image.Gray {
+	return sp.Printable.LayerImage(index + sp.first)
+}
+
+func (sp *SelectPrintable) Size() (size uv3dp.Size) {
+	size = sp.Printable.Size()
+	size.Layers = sp.count
 
 	return
 }
 
 func (cmd *SelectCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	layers := input.Properties().Size.Layers
+	layers := input.Size().Layers
 
 	first := cmd.First
 	count := cmd.Count

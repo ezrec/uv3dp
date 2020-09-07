@@ -32,33 +32,31 @@ func NewLiftCommand() (cmd *LiftCommand) {
 
 type liftModifier struct {
 	uv3dp.Printable
-	Exposure    uv3dp.Exposure
-	BottomCount int
+	exposure uv3dp.Exposure
 }
 
-func (mod *liftModifier) Properties() (prop uv3dp.Properties) {
-	prop = mod.Printable.Properties()
-
+func (mod *liftModifier) Exposure() (exposure uv3dp.Exposure) {
 	// Set the bottom and normal lift from the resins
-	prop.Exposure = mod.Exposure
+	exposure = mod.exposure
 
 	return
 }
 
-func (mod *liftModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = mod.Printable.Layer(index)
+func (mod *liftModifier) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	exp := mod.exposure
+	bot := mod.Printable.Bottom()
 
-	if index >= mod.BottomCount {
-		layer.Exposure = mod.Exposure
+	if index < bot.Count {
+		exposure = mod.Printable.LayerExposure(index)
+	} else {
+		exposure = exp
 	}
 
 	return
 }
 
 func (cmd *LiftCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err error) {
-	prop := input.Properties()
-
-	exp := prop.Exposure
+	exp := input.Exposure()
 
 	if cmd.Changed("height") {
 		TraceVerbosef(VerbosityNotice, "  Setting default lift height to %v mm", cmd.LiftHeight)
@@ -71,9 +69,8 @@ func (cmd *LiftCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err 
 	}
 
 	mod = &liftModifier{
-		Printable:   input,
-		Exposure:    exp,
-		BottomCount: prop.Bottom.Count,
+		Printable: input,
+		exposure:  exp,
 	}
 
 	return

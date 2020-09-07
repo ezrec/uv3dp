@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/spf13/pflag"
 
@@ -37,18 +38,16 @@ func NewInfoCommand() (info *InfoCommand) {
 }
 
 func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
-	prop := input.Properties()
-
 	if info.SizeSummary {
-		size := &prop.Size
+		size := input.Size()
 		fmt.Printf("Layers: %v, %vx%v slices, %.2f x %.2f x %.2f mm bed required\n",
 			size.Layers, size.X, size.Y,
 			size.Millimeter.X, size.Millimeter.Y, float32(size.Layers)*size.LayerHeight)
 	}
 
 	if info.ExposureSummary {
-		exp := &prop.Exposure
-		bot := &prop.Bottom
+		exp := input.Exposure()
+		bot := input.Bottom()
 
 		fmt.Printf("Exposure: %.2gs on, %.2gs off",
 			exp.LightOnTime,
@@ -69,22 +68,22 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 		fmt.Printf("Retract: %v mm, %v mm/min\n",
 			exp.RetractHeight, exp.RetractSpeed)
 
-		keys := []string{}
-		for k := range prop.Metadata {
-			keys = append(keys, k)
-		}
+		keys := input.MetadataKeys()
 
 		sort.Strings(keys)
 
 		for _, k := range keys {
-			fmt.Printf("%v: %v\n", k, prop.Metadata[k])
+			data, _ := input.Metadata(k)
+			fmt.Printf("%v: %v\n", k, data)
 		}
 	}
 
 	if info.LayerDetail {
-		for n := 0; n < prop.Size.Layers; n++ {
-			layer := input.Layer(n)
-			fmt.Printf("%d: @%.2f %+v\n", n, layer.Z, layer.Exposure)
+		size := input.Size()
+		for n := 0; n < size.Layers; n++ {
+			layerZ := input.LayerZ(n)
+			layerExposure := input.LayerExposure(n)
+			fmt.Printf("%d: @%.2f %+v\n", n, layerZ, layerExposure)
 		}
 	}
 

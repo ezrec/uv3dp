@@ -32,33 +32,31 @@ func NewRetractCommand() (cmd *RetractCommand) {
 
 type retractModifier struct {
 	uv3dp.Printable
-	Exposure    uv3dp.Exposure
-	BottomCount int
+	exposure uv3dp.Exposure
 }
 
-func (mod *retractModifier) Properties() (prop uv3dp.Properties) {
-	prop = mod.Printable.Properties()
-
+func (mod *retractModifier) Exposure() (exposure uv3dp.Exposure) {
 	// Set the bottom and normal retract from the resins
-	prop.Exposure = mod.Exposure
+	exposure = mod.exposure
 
 	return
 }
 
-func (mod *retractModifier) Layer(index int) (layer uv3dp.Layer) {
-	layer = mod.Printable.Layer(index)
+func (mod *retractModifier) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	bot := mod.Printable.Bottom()
+	exp := mod.exposure
 
-	if index >= mod.BottomCount {
-		layer.Exposure = mod.Exposure
+	if index < bot.Count {
+		exposure = mod.Printable.LayerExposure(index)
+	} else {
+		exposure = exp
 	}
 
 	return
 }
 
 func (cmd *RetractCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, err error) {
-	prop := input.Properties()
-
-	exp := prop.Exposure
+	exp := input.Exposure()
 
 	if cmd.Changed("height") {
 		TraceVerbosef(VerbosityNotice, "  Setting default retract height to %v mm", cmd.RetractHeight)
@@ -71,9 +69,8 @@ func (cmd *RetractCommand) Filter(input uv3dp.Printable) (mod uv3dp.Printable, e
 	}
 
 	mod = &retractModifier{
-		Printable:   input,
-		Exposure:    exp,
-		BottomCount: prop.Bottom.Count,
+		Printable: input,
+		exposure:  exp,
 	}
 
 	return

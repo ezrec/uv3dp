@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	newFormatter := func(suffix string) (format uv3dp.Formatter) { return NewPhzFormatter(suffix) }
+	newFormatter := func(suffix string) (format uv3dp.Formatter) { return NewFormatter(suffix) }
 
 	uv3dp.RegisterFormatter(".phz", newFormatter)
 

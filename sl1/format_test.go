@@ -84,7 +84,7 @@ numFade = 2
 numFast = 4
 numSlow = 0
 printProfile = 0.05 Normal
-printTime = 75.425
+printTime = 100.520
 printerModel = SL1
 printerProfile = Original Prusa SL1
 prusaSlicerVersion = uv3dp
@@ -110,7 +110,7 @@ func TestEncodeEmptySl1(t *testing.T) {
 
 	empty := uv3dp.NewEmptyPrintable(testProperties)
 
-	formatter := NewSl1Formatter(".sl1")
+	formatter := NewFormatter(".sl1")
 	formatter.BottomFade = true
 
 	buffWriter := &bytes.Buffer{}

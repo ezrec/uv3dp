@@ -129,23 +129,23 @@ type ReadSeekCloser interface {
 	io.Closer
 }
 
-type Sl1 struct {
-	properties uv3dp.Properties
-	config     sl1Config
-	layerPng   []([]byte)
+type Print struct {
+	uv3dp.Print
+	config   sl1Config
+	layerPng []([]byte)
 }
 
-type Sl1Format struct {
+type Format struct {
 	*pflag.FlagSet
 
 	MaterialName string
 	BottomFade   bool
 }
 
-func NewSl1Formatter(suffix string) (sf *Sl1Format) {
+func NewFormatter(suffix string) (sf *Format) {
 	flagSet := pflag.NewFlagSet(suffix, pflag.ContinueOnError)
 
-	sf = &Sl1Format{
+	sf = &Format{
 		FlagSet: flagSet,
 	}
 
@@ -163,15 +163,14 @@ func sl1Timestamp() (stamp string) {
 	return
 }
 
-func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
+func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
 	archive := zip.NewWriter(writer)
 	defer archive.Close()
 
-	prop := printable.Properties()
-
-	size := &prop.Size
-	exp := &prop.Exposure
-	bot := &prop.Bottom.Exposure
+	size := printable.Size()
+	exp := printable.Exposure()
+	bot := printable.Bottom().Exposure
+	bot_count := printable.Bottom().Count
 
 	layerHeight := fmt.Sprintf("%.3g", size.LayerHeight)
 	materialName := sf.MaterialName
@@ -180,9 +179,9 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	}
 
 	numFade := 0
-	numSlow := prop.Bottom.Count
+	numSlow := bot_count
 	if sf.BottomFade {
-		numFade = prop.Bottom.Count
+		numFade = bot_count
 		numSlow = 0
 	}
 
@@ -198,7 +197,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		"numFast":               fmt.Sprintf("%v", size.Layers),
 		"numSlow":               fmt.Sprintf("%v", numSlow),
 		"printProfile":          layerHeight + " Normal",
-		"printTime":             fmt.Sprintf("%.3f", prop.Duration()),
+		"printTime":             fmt.Sprintf("%.3f", float32(uv3dp.PrintDuration(printable))/float32(time.Second)),
 		"printerModel":          "SL1",
 		"printerProfile":        "Original Prusa SL1",
 		"prusaSlicerVersion":    "uv3dp",
@@ -222,7 +221,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	}
 
 	// Create all the layers
-	uv3dp.WithEachLayer(printable, func(n int, layer uv3dp.Layer) {
+	uv3dp.WithEachLayer(printable, func(p uv3dp.Printable, n int) {
 		filename := fmt.Sprintf("%s%05d.png", config_ini["jobDir"], n)
 
 		var writer io.Writer
@@ -231,14 +230,23 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 			return
 		}
 
-		err = png.Encode(writer, layer.Image)
+		err = png.Encode(writer, p.LayerImage(n))
 		if err != nil {
 			return
 		}
 	})
 
 	// Save the thumbnails
-	for _, image := range prop.Preview {
+	previews := []uv3dp.PreviewType{
+		uv3dp.PreviewTypeTiny,
+		uv3dp.PreviewTypeHuge,
+	}
+
+	for _, code := range previews {
+		image, ok := printable.Preview(code)
+		if !ok {
+			continue
+		}
 		imageSize := image.Bounds().Size()
 		filename := fmt.Sprintf("thumbnail/thumbnail%dx%d.png", imageSize.X, imageSize.Y)
 
@@ -257,7 +265,7 @@ func (sf *Sl1Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	return
 }
 
-func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
+func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	archive, err := zip.NewReader(reader, filesize)
 	if err != nil {
 		return
@@ -385,9 +393,9 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 
 	prop.Preview = thumbImage
 
-	sl1 := &Sl1{
-		properties: prop,
-		layerPng:   layerPng,
+	sl1 := &Print{
+		Print:    uv3dp.Print{Properties: prop},
+		layerPng: layerPng,
 	}
 
 	printable = sl1
@@ -395,23 +403,16 @@ func (sf *Sl1Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	return
 }
 
-func (sl1 *Sl1) Close() {
+func (sl1 *Print) Close() {
 }
 
-func (sl1 *Sl1) Properties() (prop uv3dp.Properties) {
-	prop = sl1.properties
-	return
-}
-
-func (sl1 *Sl1) Layer(index int) (layer uv3dp.Layer) {
+func (sl1 *Print) LayerImage(index int) (imageGray *image.Gray) {
 	pngImage, err := png.Decode(bytes.NewReader(sl1.layerPng[index]))
 	if err != nil {
 		panic(err)
 	}
 
-	layer.Z = sl1.properties.LayerZ(index)
-	layer.Image = pngImage.(*image.Gray)
-	layer.Exposure = sl1.properties.LayerExposure(index)
+	imageGray = pngImage.(*image.Gray)
 
 	return
 }

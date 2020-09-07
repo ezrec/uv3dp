@@ -27,17 +27,17 @@ type AliasPrintable struct {
 	uv3dp.Printable
 }
 
-func (ap *AliasPrintable) Layer(index int) (layer uv3dp.Layer) {
-	layer = ap.Printable.Layer(index)
+func (ap *AliasPrintable) LayerImage(index int) (ig *image.Gray) {
+	ig = ap.Printable.LayerImage(index)
 
-	layer.Image.Pix = greyMap
+	ig.Pix = greyMap
 
 	return
 }
 
 var (
 	// Collect an alias printable
-	aliasPrintable = &AliasPrintable{uv3dp.NewEmptyPrintable(uv3dp.Properties{
+	aliasPrintable = &AliasPrintable{&uv3dp.Print{uv3dp.Properties{
 		Size: uv3dp.Size{
 			X: 10,
 			Y: 1,
@@ -73,7 +73,7 @@ var (
 			uv3dp.PreviewTypeTiny: image.NewGray(image.Rect(0, 0, 1, 1)),
 			uv3dp.PreviewTypeHuge: image.NewGray(image.Rect(0, 0, 1, 1)),
 		},
-	})}
+	}}}
 )
 
 // reuse 'bufferMap' from format_empty_test.go
@@ -91,7 +91,7 @@ func TestAlias(t *testing.T) {
 	}
 
 	for n, item := range table {
-		formatter := NewCbddlpFormatter(".cbddlp")
+		formatter := NewFormatter(".cbddlp")
 		formatter.AntiAlias = item.AntiAlias
 
 		buffWriter := &bytes.Buffer{}
@@ -103,7 +103,7 @@ func TestAlias(t *testing.T) {
 	}
 
 	for _, item := range table {
-		formatter := NewCbddlpFormatter(".cbddlp")
+		formatter := NewFormatter(".cbddlp")
 
 		aliasRaw := item.Raw
 		buffReader := &bufferMap{Buffer: aliasRaw}
@@ -113,8 +113,16 @@ func TestAlias(t *testing.T) {
 			t.Fatalf("expected nil, got %v", err)
 		}
 
-		eProp := aliasPrintable.Properties()
-		rProp := result.Properties()
+		eProp := uv3dp.Properties{
+			Size:     aliasPrintable.Size(),
+			Exposure: aliasPrintable.Exposure(),
+			Bottom:   aliasPrintable.Bottom(),
+		}
+		rProp := uv3dp.Properties{
+			Size:     result.Size(),
+			Exposure: result.Exposure(),
+			Bottom:   result.Bottom(),
+		}
 
 		fixupV2(&eProp)
 		fixupV2(&rProp)
@@ -125,11 +133,11 @@ func TestAlias(t *testing.T) {
 			t.Logf("actual  : %+v", rProp)
 		}
 
-		rLayer := result.Layer(0)
-		if !cmp.Equal(rLayer.Image.Pix, item.GrayMap) {
+		rLayer := result.LayerImage(0)
+		if !cmp.Equal(rLayer.Pix, item.GrayMap) {
 			t.Errorf("aa%v: expected image to exactly match", item.AntiAlias)
 			t.Logf("expected: %+#v", item.GrayMap)
-			t.Logf("actual  : %+#v", rLayer.Image.Pix)
+			t.Logf("actual  : %+#v", rLayer.Pix)
 		}
 	}
 }

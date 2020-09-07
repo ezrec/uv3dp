@@ -135,8 +135,16 @@ func TestRawToEmpty(t *testing.T) {
 			t.Fatalf("expected nil, got %v", err)
 		}
 
-		eProp := emptyPrintable.Properties()
-		rProp := result.Properties()
+		eProp := uv3dp.Properties{
+			Size:     emptyPrintable.Size(),
+			Exposure: emptyPrintable.Exposure(),
+			Bottom:   emptyPrintable.Bottom(),
+		}
+		rProp := uv3dp.Properties{
+			Size:     result.Size(),
+			Exposure: result.Exposure(),
+			Bottom:   result.Bottom(),
+		}
 
 		eProp.Preview = nil
 		rProp.Preview = nil

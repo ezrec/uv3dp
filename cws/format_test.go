@@ -177,7 +177,7 @@ func TestEncodeEmptyCWS(t *testing.T) {
 
 	empty := uv3dp.NewEmptyPrintable(testProperties)
 
-	formatter := NewCWSFormatter(".cws")
+	formatter := NewFormatter(".cws")
 
 	buffWriter := &bytes.Buffer{}
 	formatter.Encode(buffWriter, empty)

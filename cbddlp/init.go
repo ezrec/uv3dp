@@ -23,7 +23,7 @@ var machines_cbddlp = map[string]uv3dp.Machine{
 }
 
 func init() {
-	newFormatter := func(suffix string) (format uv3dp.Formatter) { return NewCbddlpFormatter(suffix) }
+	newFormatter := func(suffix string) (format uv3dp.Formatter) { return NewFormatter(suffix) }
 
 	uv3dp.RegisterFormatter(".cbddlp", newFormatter)
 	uv3dp.RegisterFormatter(".photon", newFormatter)

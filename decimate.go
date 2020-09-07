@@ -20,18 +20,18 @@ func NewDecimatedPrintable(printable Printable) (dp *DecimatedPrintable) {
 		Printable:  printable,
 		Passes:     1,
 		FirstLayer: 0,
-		Layers:     printable.Properties().Size.Layers,
+		Layers:     printable.Size().Layers,
 	}
 
 	return
 }
 
-func (dec *DecimatedPrintable) Layer(index int) (layer Layer) {
-	layer = dec.Printable.Layer(index)
+func (dec *DecimatedPrintable) LayerImage(index int) (ig *image.Gray) {
+	ig = dec.Printable.LayerImage(index)
 
 	if index >= dec.FirstLayer && ((index - dec.FirstLayer) < dec.Layers) {
 		for pass := 0; pass < dec.Passes; pass++ {
-			layer.Image = decimateGray(layer.Image)
+			ig = decimateGray(ig)
 		}
 	}
 

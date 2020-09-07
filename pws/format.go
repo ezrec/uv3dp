@@ -283,7 +283,7 @@ func (layerdef *LayerDef) Unmarshal(data []byte) (err error) {
 }
 
 type Print struct {
-	properties       uv3dp.Properties
+	uv3dp.Print
 	perLayerOverride bool
 	layers           []Layer
 }
@@ -317,7 +317,9 @@ func NewFormatter(suffix string) (sf *Format) {
 }
 
 func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err error) {
-	prop := printable.Properties()
+	size := printable.Size()
+	exposure := printable.Exposure()
+	bottom := printable.Bottom()
 
 	filemark := Filemark{
 		Mark:    sectionMarkFilemark,
@@ -327,41 +329,42 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 
 	header := Header{
 		// TODO: Check for 'squareness' of pixels?
-		PixelSize:         prop.Size.Millimeter.X / float32(prop.Size.X) * 1000.0,
-		LayerHeight:       prop.Size.LayerHeight,
-		LightOnTime:       prop.Exposure.LightOnTime,
-		LightOffTime:      prop.Exposure.LightOffTime,
-		BottomLightOnTime: prop.Bottom.Exposure.LightOnTime,
-		BottomLayers:      float32(prop.Bottom.Count),
-		LiftHeight:        prop.Exposure.LiftHeight,
-		LiftSpeed:         prop.Exposure.LiftSpeed / 60.0,
-		RetractSpeed:      prop.Exposure.RetractSpeed / 60.0,
+		PixelSize:         size.Millimeter.X / float32(size.X) * 1000.0,
+		LayerHeight:       size.LayerHeight,
+		LightOnTime:       exposure.LightOnTime,
+		LightOffTime:      exposure.LightOffTime,
+		BottomLightOnTime: bottom.Exposure.LightOnTime,
+		BottomLayers:      float32(bottom.Count),
+		LiftHeight:        exposure.LiftHeight,
+		LiftSpeed:         exposure.LiftSpeed / 60.0,
+		RetractSpeed:      exposure.RetractSpeed / 60.0,
 		AntiAlias:         uint32(sf.AntiAlias),
-		ResolutionX:       uint32(prop.Size.X),
-		ResolutionY:       uint32(prop.Size.Y),
+		ResolutionX:       uint32(size.X),
+		ResolutionY:       uint32(size.Y),
 		PerLayerOverride:  1, // true
 	}
 
 	var preview Preview
 
-	previewImage, ok := prop.Preview[uv3dp.PreviewTypeTiny]
+	previewImage, ok := printable.Preview(uv3dp.PreviewTypeTiny)
 	if ok {
 		preview.SetImage(previewImage)
 	}
 
-	layers := make([]Layer, prop.Size.Layers)
+	layers := make([]Layer, size.Layers)
 
-	uv3dp.WithAllLayers(printable, func(n int, layer uv3dp.Layer) {
+	uv3dp.WithAllLayers(printable, func(p uv3dp.Printable, n int) {
+		exposure := p.LayerExposure(n)
 		l := Layer{
-			LiftHeight:  layer.Exposure.LiftHeight,
-			LiftSpeed:   layer.Exposure.LiftSpeed,
-			LightOnTime: layer.Exposure.LightOnTime,
+			LiftHeight:  exposure.LiftHeight,
+			LiftSpeed:   exposure.LiftSpeed,
+			LightOnTime: exposure.LightOnTime,
 			LayerHeight: header.LayerHeight,
 		}
 
 		l.slice.AntiAlias = sf.AntiAlias
 		l.slice.Format = sf.sliceFormat
-		l.slice.SetImage(layer.Image)
+		l.slice.SetImage(p.LayerImage(n))
 
 		layers[n] = l
 	})
@@ -556,7 +559,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 	}
 
 	printable = &Print{
-		properties:       prop,
+		Print:            uv3dp.Print{Properties: prop},
 		layers:           layerdef.Layer,
 		perLayerOverride: header.PerLayerOverride != 0,
 	}
@@ -567,29 +570,25 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 func (sf *Print) Close() {
 }
 
-func (pws *Print) Properties() (prop uv3dp.Properties) {
-	prop = pws.properties
+func (pws *Print) LayerExposure(index int) (exposure uv3dp.Exposure) {
+	l := pws.layers[index]
+
+	exposure = pws.Print.LayerExposure(index)
+
+	if pws.perLayerOverride {
+		exposure.LightOnTime = l.LightOnTime
+		exposure.LiftHeight = l.LiftHeight
+		exposure.LiftSpeed = l.LiftSpeed * 60
+	}
+
 	return
 }
 
-func (pws *Print) Layer(index int) (layer uv3dp.Layer) {
-	l := pws.layers[index]
-
-	prop := &pws.properties
-	layer.Exposure = prop.LayerExposure(index)
-
-	if pws.perLayerOverride {
-		layer.Exposure.LightOnTime = l.LightOnTime
-		layer.Exposure.LiftHeight = l.LiftHeight
-		layer.Exposure.LiftSpeed = l.LiftSpeed * 60
-	}
-
+func (pws *Print) Image(index int) (slice *image.Gray) {
 	slice, err := pws.layers[index].slice.GetImage()
 	if err != nil {
-		panic(fmt.Sprintf("pws: layer %v/%v: %s", index+1, prop.Size.Layers, err))
+		panic(fmt.Sprintf("pws: layer %v: %s", index+1, err))
 	}
 
-	layer.Z = prop.LayerZ(index)
-	layer.Image = slice
 	return
 }
