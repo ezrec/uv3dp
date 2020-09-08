@@ -124,6 +124,12 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Options for '.cws':
     
     
+    Options for '.lgs':
+    
+    
+    Options for '.lgs30':
+    
+    
     Options for '.photon':
     
       -a, --anti-alias int   Override antialias level (1..16) (default 1)
@@ -165,6 +171,8 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         ld-002r            Creality LD-002R          Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
         mars                 Elegoo Mars             Size: 1440x2560, 68x121 mm,	Format: .cbddlp 
         mars2-pro            Elegoo Mars 2 Pro       Size: 1620x2560, 82.6x131 mm,	Format: .ctb --version=3
+        orange10             Longer Orange 10        Size: 480x854, 55.4x98.6 mm,	Format: .lgs 
+        orange30             Longer Orange 30        Size: 1440x2560, 68x121 mm,	Format: .lgs30 
         photon             Anycubic Photon           Size: 1440x2560, 68x121 mm,	Format: .photon 
         photon0            Anycubic Photon Zero      Size: 480x854, 55.4x98.6 mm,	Format: .pw0 
         photons            Anycubic Photon S         Size: 1440x2560, 68x121 mm,	Format: .pws 

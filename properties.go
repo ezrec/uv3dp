@@ -37,8 +37,17 @@ func (exp *Exposure) Duration() (total time.Duration) {
 	totalSec := exp.LightOnTime + exp.LightOffTime
 
 	// Motion is lift; then retract -> move back to start at retract speed
-	totalSec += exp.LiftHeight / exp.LiftSpeed * 60
-	totalSec += (exp.LiftHeight + exp.RetractHeight*2) / exp.RetractSpeed * 60
+	if exp.LiftSpeed > 0 {
+		totalSec += exp.LiftHeight / exp.LiftSpeed * 60
+	}
+
+	if exp.RetractSpeed > 0 {
+		totalSec += (exp.LiftHeight + exp.RetractHeight*2) / exp.RetractSpeed * 60
+	} else {
+		if exp.LiftSpeed > 0 {
+			totalSec += exp.LiftHeight / exp.LiftSpeed * 60
+		}
+	}
 
 	total = time.Duration(totalSec * float32(time.Second))
 
