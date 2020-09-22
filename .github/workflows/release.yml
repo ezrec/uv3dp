@@ -38,6 +38,13 @@ jobs:
           cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
           tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
 
+      - name: Craft MacOS Artifacts
+        run: |
+          GOOS=darwin GOARCH=amd64 go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          mkdir uv3dp-${{ steps.release.outputs.TAG }}
+          cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
+          tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}-macos-amd64.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
+
       - name: Craft Windows Artifacts
         run: |
           GOOS=windows GOARCH=amd64 go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
@@ -62,6 +69,16 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2
           asset_name: uv3dp-${{ steps.release.outputs.TAG }}-linux-amd64.tar.bz2
+          asset_content_type: application/x-bzip-compressed-tar
+      - name: Upload MacOS Release Asset
+        id: upload-release-asset-macos
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./uv3dp-${{ steps.release.outputs.TAG }}-macos-amd64.tar.bz2
+          asset_name: uv3dp-${{ steps.release.outputs.TAG }}-macos-amd64.tar.bz2
           asset_content_type: application/x-bzip-compressed-tar
       - name: Upload Windows Release Asset
         id: upload-release-asset-windows
