@@ -311,7 +311,7 @@ func (uvj *UVJ) LayerExposure(index int) (exposure uv3dp.Exposure) {
 	return
 }
 
-func (uvj *UVJ) Image(index int) (layerImage *image.Gray) {
+func (uvj *UVJ) LayerImage(index int) (layerImage *image.Gray) {
 	pngImage, err := png.Decode(bytes.NewReader(uvj.layerPng[index]))
 	if err != nil {
 		err = fmt.Errorf("Layer %v: %w", index, err)
