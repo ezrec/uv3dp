@@ -9,6 +9,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"image"
+	"image/color"
 	"image/png"
 	"io/ioutil"
 	"strings"
@@ -32,6 +33,62 @@ func (br *bufferReader) ReadAt(p []byte, off int64) (n int, err error) {
 
 func (br *bufferReader) Len() int64 {
 	return int64(len(br.data))
+}
+
+type PatternImage struct {
+	image.Rectangle
+	Pattern []uint8
+}
+
+func NewPatternImage(rect image.Rectangle, pattern []uint8) (pi *PatternImage) {
+	pi = &PatternImage{
+		Rectangle: rect,
+		Pattern:   pattern,
+	}
+
+	return
+}
+
+func (pi *PatternImage) ColorModel() color.Model {
+	return color.GrayModel
+}
+
+func (pi *PatternImage) At(x, y int) color.Color {
+	if pi.In(image.Rect(x, y, x, y)) {
+		index := x
+		gray := pi.Pattern[index%len(pi.Pattern)]
+		return color.Gray{Y: gray}
+	}
+
+	return pi.Rectangle.At(x, y)
+}
+
+type PatternPrint struct {
+	uv3dp.Print
+	GrayImage *image.Gray
+}
+
+func NewPatternPrint(prop uv3dp.Properties, pattern []uint8) (pp *PatternPrint) {
+	pi := NewPatternImage(prop.Bounds(), pattern)
+	gi := image.NewGray(prop.Bounds())
+
+	// Convert the pattern image to a Gray Image
+	for y := 0; y < pi.Dy(); y++ {
+		for x := 0; x < pi.Dx(); x++ {
+			gi.Set(x, y, pi.At(x, y))
+		}
+	}
+
+	pp = &PatternPrint{
+		Print:     uv3dp.Print{Properties: prop},
+		GrayImage: gi,
+	}
+
+	return
+}
+
+func (pp *PatternPrint) LayerImage(n int) (gi *image.Gray) {
+	return pp.GrayImage
 }
 
 var (
@@ -162,19 +219,23 @@ func TestEncodeEmptyUVJ(t *testing.T) {
 	// Collect an empty printable
 	time_Now = func() (now time.Time) { return }
 
+	pattern := []uint8{0, 0, 0, 0, 0x11, 0x11, 0x33, 0x33, 0xff, 0xff, 0x7f, 0x55, 0x20, 0x00, 0x00}
+
 	buffPng := &bytes.Buffer{}
-	png.Encode(buffPng, image.NewGray(testProperties.Bounds()))
-	png_empty := buffPng.Bytes()
+
+	empty := NewPatternPrint(testProperties, pattern)
+
+	pattern_image := empty.LayerImage(0)
+	png.Encode(buffPng, pattern_image)
+	png_pattern := buffPng.Bytes()
 
 	expected_zip := map[string]([]byte){
 		"config.json":        []byte(testConfigJson),
-		"slice/00000000.png": png_empty,
-		"slice/00000001.png": png_empty,
-		"slice/00000002.png": png_empty,
-		"slice/00000003.png": png_empty,
+		"slice/00000000.png": png_pattern,
+		"slice/00000001.png": png_pattern,
+		"slice/00000002.png": png_pattern,
+		"slice/00000003.png": png_pattern,
 	}
-
-	empty := uv3dp.NewEmptyPrintable(testProperties)
 
 	formatter := NewUVJFormatter(".uvj")
 
