@@ -149,7 +149,6 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for '.sl1':
     
-      -f, --bottom-fade            Fade bottom layers exposure time
       -m, --material-name string   config.init entry 'materialName' (default "3DM-ABS @")
     
     Options for '.uvj':

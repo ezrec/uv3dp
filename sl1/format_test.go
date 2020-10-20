@@ -55,7 +55,8 @@ var (
 			RetractSpeed:  200.0,
 		},
 		Bottom: uv3dp.Bottom{
-			Count: 2,
+			Count:      2,
+			Transition: 1,
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   16.500,
 				LightOffTime:  2.250,
@@ -80,9 +81,9 @@ fileCreationTimestamp = 1-01-01 at 00:00:00 UTC
 jobDir = uv3dp
 layerHeight = 0.05
 materialName = 3DM-ABS @0.05
-numFade = 2
+numFade = 1
 numFast = 4
-numSlow = 0
+numSlow = 2
 printProfile = 0.05 Normal
 printTime = 100.520
 printerModel = SL1
@@ -111,7 +112,6 @@ func TestEncodeEmptySl1(t *testing.T) {
 	empty := uv3dp.NewEmptyPrintable(testProperties)
 
 	formatter := NewFormatter(".sl1")
-	formatter.BottomFade = true
 
 	buffWriter := &bytes.Buffer{}
 	formatter.Encode(buffWriter, empty)

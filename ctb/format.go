@@ -97,7 +97,7 @@ type ctbSlicer struct {
 	ChiTuBoxVersion [4]byte   // 30: major, minor, patch, release
 	Unknown34       uint32
 	Unknown38       uint32
-	Unknown3C       float32
+	Unknown3C       float32 // 3c: TransitionLayerCount (?)
 	Unknown40       uint32
 	Unknown44       uint32
 	Unknown48       float32

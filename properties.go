@@ -55,6 +55,7 @@ func (exp *Exposure) Duration() (total time.Duration) {
 }
 
 // Interpolate scales settings between this and another Exposure
+// scale of 0.0 = this exposure, 1.0 = target exposure
 func (exp *Exposure) Interpolate(target Exposure, scale float32) (result Exposure) {
 	result.LightOnTime = exp.LightOnTime + float32(float64(target.LightOnTime-exp.LightOnTime)*float64(scale))
 	result.LightOffTime = exp.LightOffTime + float32(float64(target.LightOffTime-exp.LightOffTime)*float64(scale))
@@ -68,8 +69,9 @@ func (exp *Exposure) Interpolate(target Exposure, scale float32) (result Exposur
 
 // Bottom layer exposure
 type Bottom struct {
-	Exposure     // Exposure
-	Count    int // Number of bottom layers
+	Exposure       // Exposure
+	Count      int // Number of bottom layers
+	Transition int // Number of transition layers above the bottom layer
 }
 
 type PreviewType uint
@@ -117,10 +119,15 @@ func (prop *Properties) Bounds() image.Rectangle {
 
 // Exposure gets the default exposure by layer index
 func (prop *Properties) LayerExposure(index int) (exposure Exposure) {
-	if index >= prop.Bottom.Count {
-		exposure = prop.Exposure
-	} else {
+	switch {
+	case index < prop.Bottom.Count:
 		exposure = prop.Bottom.Exposure
+	case index < prop.Bottom.Count+prop.Bottom.Transition:
+		// Scaling is a bit odd, but we don't want to include 0.0 (same as bottom) or 1.0 (same as top) in our range
+		scale := float32(index-prop.Bottom.Count+1) / float32(prop.Bottom.Transition+1)
+		exposure = prop.Bottom.Exposure.Interpolate(prop.Exposure, scale)
+	default:
+		exposure = prop.Exposure
 	}
 
 	// Validate LightPWM
