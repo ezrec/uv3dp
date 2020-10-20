@@ -139,7 +139,6 @@ type Format struct {
 	*pflag.FlagSet
 
 	MaterialName string
-	BottomFade   bool
 }
 
 func NewFormatter(suffix string) (sf *Format) {
@@ -150,7 +149,6 @@ func NewFormatter(suffix string) (sf *Format) {
 	}
 
 	sf.StringVarP(&sf.MaterialName, "material-name", "m", "3DM-ABS @", "config.init entry 'materialName'")
-	sf.BoolVarP(&sf.BottomFade, "bottom-fade", "f", false, "Fade bottom layers exposure time")
 	sf.SetInterspersed(false)
 
 	return
@@ -170,19 +168,13 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 	size := printable.Size()
 	exp := printable.Exposure()
 	bot := printable.Bottom().Exposure
-	bot_count := printable.Bottom().Count
+	bot_slow := printable.Bottom().Count
+	bot_fade := printable.Bottom().Transition
 
 	layerHeight := fmt.Sprintf("%.3g", size.LayerHeight)
 	materialName := sf.MaterialName
 	if strings.HasSuffix(materialName, " @") {
 		materialName += layerHeight
-	}
-
-	numFade := 0
-	numSlow := bot_count
-	if sf.BottomFade {
-		numFade = bot_count
-		numSlow = 0
 	}
 
 	config_ini := map[string]string{
@@ -193,9 +185,9 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 		"fileCreationTimestamp": sl1Timestamp(),
 		"layerHeight":           layerHeight,
 		"materialName":          materialName,
-		"numFade":               fmt.Sprintf("%v", numFade),
+		"numFade":               fmt.Sprintf("%v", bot_fade),
 		"numFast":               fmt.Sprintf("%v", size.Layers),
-		"numSlow":               fmt.Sprintf("%v", numSlow),
+		"numSlow":               fmt.Sprintf("%v", bot_slow),
 		"printProfile":          layerHeight + " Normal",
 		"printTime":             fmt.Sprintf("%.3f", float32(uv3dp.PrintDuration(printable))/float32(time.Second)),
 		"printerModel":          "SL1",
@@ -369,11 +361,8 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 	bot.Exposure = defaultBottomExposure
 	bot.Exposure.LightOnTime = config.expTimeFirst
 
-	if config.numFade > 0 {
-		bot.Count = int(config.numFade)
-	} else {
-		bot.Count = int(config.numSlow)
-	}
+	bot.Transition = int(config.numFade)
+	bot.Count = int(config.numSlow)
 
 	exp := &prop.Exposure
 	*exp = defaultExposure

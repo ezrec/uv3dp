@@ -104,7 +104,7 @@ var (
 			LayerHeight: 0.05,
 		},
 		Exposure: uv3dp.Exposure{
-			LightOnTime:   16.500,
+			LightOnTime:   16,
 			LightOffTime:  2.250,
 			LightPWM:      123,
 			LiftHeight:    5.5,
@@ -113,9 +113,10 @@ var (
 			RetractSpeed:  200.0,
 		},
 		Bottom: uv3dp.Bottom{
-			Count: 2,
+			Count:      1,
+			Transition: 1,
 			Exposure: uv3dp.Exposure{
-				LightOnTime:   30.500,
+				LightOnTime:   30,
 				LightOffTime:  2.250,
 				LightPWM:      255,
 				LiftHeight:    5.5,
@@ -145,7 +146,7 @@ const (
       "LayerHeight": 0.05
     },
     "Exposure": {
-      "LightOnTime": 16.5,
+      "LightOnTime": 16,
       "LightOffTime": 2.25,
       "LightPWM": 123,
       "LiftHeight": 5.5,
@@ -154,20 +155,21 @@ const (
       "RetractSpeed": 200
     },
     "Bottom": {
-      "LightOnTime": 30.5,
+      "LightOnTime": 30,
       "LightOffTime": 2.25,
       "LiftHeight": 5.5,
       "LiftSpeed": 120,
       "RetractHeight": 3.3,
       "RetractSpeed": 200,
-      "Count": 2
+      "Count": 1,
+      "Transition": 1
     }
   },
   "Layers": [
     {
       "Z": 0.05,
       "Exposure": {
-        "LightOnTime": 30.5,
+        "LightOnTime": 30,
         "LightOffTime": 2.25,
         "LiftHeight": 5.5,
         "LiftSpeed": 120,
@@ -178,7 +180,7 @@ const (
     {
       "Z": 0.1,
       "Exposure": {
-        "LightOnTime": 30.5,
+        "LightOnTime": 23,
         "LightOffTime": 2.25,
         "LiftHeight": 5.5,
         "LiftSpeed": 120,
@@ -189,7 +191,7 @@ const (
     {
       "Z": 0.15,
       "Exposure": {
-        "LightOnTime": 16.5,
+        "LightOnTime": 16,
         "LightOffTime": 2.25,
         "LightPWM": 123,
         "LiftHeight": 5.5,
@@ -201,7 +203,7 @@ const (
     {
       "Z": 0.2,
       "Exposure": {
-        "LightOnTime": 16.5,
+        "LightOnTime": 16,
         "LightOffTime": 2.25,
         "LightPWM": 123,
         "LiftHeight": 5.5,
