@@ -60,6 +60,10 @@ type sl1Config struct {
 	numSlow      uint
 	printTime    float32
 	usedMaterial float32
+	pixelsX      uint
+	pixelsY      uint
+	MillimeterY  float32
+	MillimeterX  float32
 }
 
 type ErrConfigMissing string
@@ -83,11 +87,13 @@ func (cfg *sl1Config) unmap(items map[string]string) (err error) {
 	cfg.jobDir = jobDir
 
 	floats := map[string](*float32){
-		"expTime":      &cfg.expTime,
-		"expTimeFirst": &cfg.expTimeFirst,
-		"layerHeight":  &cfg.layerHeight,
-		"printTime":    &cfg.printTime,
-		"usedMaterial": &cfg.usedMaterial,
+		"expTime":        &cfg.expTime,
+		"expTimeFirst":   &cfg.expTimeFirst,
+		"layerHeight":    &cfg.layerHeight,
+		"printTime":      &cfg.printTime,
+		"usedMaterial":   &cfg.usedMaterial,
+		"display_height": &cfg.MillimeterX,
+		"display_width":  &cfg.MillimeterY,
 	}
 	for attr, ptr := range floats {
 		item, ok := items[attr]
@@ -103,9 +109,11 @@ func (cfg *sl1Config) unmap(items map[string]string) (err error) {
 	}
 
 	uints := map[string](*uint){
-		"numFade": &cfg.numFade,
-		"numFast": &cfg.numFast,
-		"numSlow": &cfg.numSlow,
+		"numFade":          &cfg.numFade,
+		"numFast":          &cfg.numFast,
+		"numSlow":          &cfg.numSlow,
+		"display_pixels_x": &cfg.pixelsY,
+		"display_pixels_y": &cfg.pixelsX,
 	}
 	for attr, ptr := range uints {
 		item, ok := items[attr]
@@ -257,6 +265,26 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 	return
 }
 
+func read_ini(file *zip.File) (map[string]string, error) {
+	retmap := make(map[string]string)
+	err := error(nil)
+
+	prusacfg_reader, err := file.Open()
+	if err != nil {
+		return retmap, err
+	}
+	defer func() { prusacfg_reader.Close() }()
+
+	scanner := bufio.NewScanner(prusacfg_reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.SplitN(line, " = ", 2)
+		retmap[fields[0]] = fields[1]
+	}
+
+	return retmap, err
+}
+
 func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	archive, err := zip.NewReader(reader, filesize)
 	if err != nil {
@@ -275,19 +303,28 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		return
 	}
 
-	cfg_reader, err := cfg.Open()
+	// Load the config file
+	config_map, err := read_ini(cfg)
 	if err != nil {
 		return
 	}
-	defer func() { cfg_reader.Close() }()
 
-	// Load the config file
-	config_map := make(map[string]string)
-	scanner := bufio.NewScanner(cfg_reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		fields := strings.SplitN(line, " = ", 2)
-		config_map[fields[0]] = fields[1]
+	prusacfg, found := fileMap["prusaslicer.ini"]
+	if !found {
+		err = errors.New("prusaslicer.ini not found in archive")
+		return
+	}
+
+	prusacfg_map, err := read_ini(prusacfg)
+	if err != nil {
+		return
+	}
+
+	for key := range prusacfg_map {
+		_, contained := config_map[key]
+		if !contained {
+			config_map[key] = prusacfg_map[key]
+		}
 	}
 
 	var config sl1Config
@@ -349,12 +386,12 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 	prop := uv3dp.Properties{}
 
 	size := &prop.Size
-	size.X = defaultPixelsX
-	size.Y = defaultPixelsY
+	size.X = int(config.pixelsX)
+	size.Y = int(config.pixelsY)
 	size.Layers = int(config.numFast)
 
-	size.Millimeter.X = float32(size.X) * mmPerPixel
-	size.Millimeter.Y = float32(size.Y) * mmPerPixel
+	size.Millimeter.X = config.MillimeterX
+	size.Millimeter.Y = config.MillimeterY
 	size.LayerHeight = config.layerHeight
 
 	bot := &prop.Bottom
