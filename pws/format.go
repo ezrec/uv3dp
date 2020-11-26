@@ -129,6 +129,7 @@ const (
 	defaultPreviewWidth  = 224
 	defaultPreviewHeight = 168
 )
+
 type Preview struct {
 	Width      uint32 // Image width
 	Resolution uint32
