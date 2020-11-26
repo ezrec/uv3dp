@@ -129,12 +129,12 @@ const (
 	defaultPreviewWidth  = 224
 	defaultPreviewHeight = 168
 )
-
 type Preview struct {
 	Width      uint32 // Image width
 	Resolution uint32
 	Height     uint32 // Image height
-
+	_          [4]uint32
+	
 	// little-endian 16bit colors, RGB 565 encoded.
 	imageData []byte
 }
