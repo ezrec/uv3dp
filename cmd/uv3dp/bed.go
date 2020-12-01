@@ -85,7 +85,7 @@ func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err
 
 	// Compute desitination rectange
 
-	// First, get the size of the src bed,sscaled to the size in dest pixels
+	// First, get the size of the src bed, scaled to the size in dest pixels
 	dstRect := image.Rect(0, 0, int(math.Round(float64(srcSize.Millimeter.X/dstXPpm))), int(math.Round(float64(srcSize.Millimeter.Y/dstYPpm))))
 
 	// Center on bed
