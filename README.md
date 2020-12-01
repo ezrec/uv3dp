@@ -190,4 +190,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         x156                   EPAX X156             Size: 2160x3840, 194x345 mm,	Format: .cbddlp 
         x1k                    EPAX X1K              Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
         x1n                    EPAX X1N              Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
-        x9                     EPAX X9               Size: 1600x2560, 120x192 mm,	Format: .cbddlp
+        x9                     EPAX X9               Size: 1600x2560, 120x192 mm,	Format: .cbddlp 
+    
+    Known resins: (from local user ChiTuBox config)
+    
