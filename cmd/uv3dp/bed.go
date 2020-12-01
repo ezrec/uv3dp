@@ -6,11 +6,13 @@ package main
 
 import (
 	"fmt"
+	"math"
+
+	"image"
+	"image/color"
 
 	"github.com/spf13/pflag"
 	"golang.org/x/image/draw"
-	"image"
-	"image/color"
 
 	"github.com/ezrec/uv3dp"
 )
@@ -84,7 +86,7 @@ func (bc *BedCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err
 	// Compute desitination rectange
 
 	// First, get the size of the src bed, scaled to the size in dest pixels
-	dstRect := image.Rect(0, 0, int(srcSize.Millimeter.X/dstXPpm), int(srcSize.Millimeter.Y/dstYPpm))
+	dstRect := image.Rect(0, 0, int(math.Round(float64(srcSize.Millimeter.X/dstXPpm))), int(math.Round(float64(srcSize.Millimeter.Y/dstYPpm))))
 
 	// Center on bed
 	dstRect = dstRect.Add(image.Point{

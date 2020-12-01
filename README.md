@@ -182,6 +182,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         shuffle             Phrozen Shuffle          Size: 1440x2560, 67.7x120 mm,	Format: .zip 
         sl1                   Prusa SL1              Size: 1440x2560, 68x121 mm,	Format: .sl1 
         sonic-mini          Phrozen Sonic Mini       Size: 1080x1920, 68x121 mm,	Format: .phz 
+        sonic-mini-4k       Phrozen Sonic Mini 4K    Size: 3840x2160, 134x75.6 mm,	Format: .ctb --version=3
         x1                     EPAX X1               Size: 1440x2560, 68x121 mm,	Format: .cbddlp 
         x10                    EPAX X10              Size: 1600x2560, 135x216 mm,	Format: .cbddlp 
         x10n                   EPAX X10              Size: 1600x2560, 135x216 mm,	Format: .ctb --version=2
