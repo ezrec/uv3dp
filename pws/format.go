@@ -135,7 +135,7 @@ type Preview struct {
 	Resolution uint32
 	Height     uint32 // Image height
 	_          [4]uint32
-	
+
 	// little-endian 16bit colors, RGB 565 encoded.
 	imageData []byte
 }
