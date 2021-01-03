@@ -69,6 +69,7 @@ func init() {
 	defer reader.Close()
 
 	defExposure := uv3dp.Exposure{
+		LightPWM:      255,
 		LightOnTime:   -1,
 		LightOffTime:  -1,
 		LiftHeight:    -1,

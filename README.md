@@ -167,12 +167,15 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Options for 'empty':
     
+      -g, --gray uint8                 Grayscale color (0 for black, 255 for white)
+      -l, --layers int                 Number of 0.05mm layers (default 1)
       -M, --machine string             Size preset by machine type (default "photon")
       -m, --millimeters float32Slice   Empty size, in millimeters (default [68.040001,120.959999])
       -p, --pixels ints                Empty size, in pixels (default [1440,2560])
     
     Known machines:
     
+        e6                     EPAX E6               Size: 1620x2560, 81x128 mm,	Format: .ctb --version=3
         elfin                Nova3D Elfin            Size: 1410x2550, 73x132 mm,	Format: .cws 
         inkspire            Zortrax Inkspire         Size: 1440x2560, 72x128 mm,	Format: .zcodex 
         ld-002r            Creality LD-002R          Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
@@ -198,5 +201,17 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         x1n                    EPAX X1N              Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
         x9                     EPAX X9               Size: 1600x2560, 120x192 mm,	Format: .cbddlp 
     
-    Known resins: (from local user ChiTuBox config)
+    Known resins: (from /home/jmcmullan/.config/ChiTuBox/machine/7.cfg)
     
+        EPAX Dental Model for 0.05mm             bottom 8 layers, 50; nominal 6
+        EPAX General Purpose Rapid for 0.05mm    bottom 8 layers, 50; nominal 6
+        EPAX Hard and Tough for 0.05mm           bottom 8 layers, 50; nominal 6
+        EPAX Hard for 0.05mm                     bottom 8 layers, 50; nominal 6
+        EPAX Jewelry Castable for 0.05mm         bottom 8 layers, 50; nominal 16
+        EPAX Porcelain-like Resin for 0.05mm     bottom 8 layers, 50; nominal 6
+        EPAX Soy for 0.05mm                      bottom 8 layers, 50; nominal 9
+        EPAX Water Washable for 0.05mm           bottom 8 layers, 50; nominal 9
+        Profile                                  bottom 8 layers, 50; nominal 22
+        eSUN Hard and Tough for 0.05mm           bottom 8 layers, 50; nominal 8
+        eSUN Standard/Bio for 0.05mm             bottom 8 layers, 50; nominal 6
+        eSUN Water Washable for 0.05mm           bottom 8 layers, 50; nominal 9
