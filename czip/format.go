@@ -208,8 +208,8 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 		BottomLayerCount:        bot_count,
 		Mirror:                  1,
 		TotalLayer:              size.Layers,
-		BottomLayerLiftHeight:   bot.LiftSpeed,
-		BottomLayerLiftSpeed:    bot.LiftHeight,
+		BottomLayerLiftHeight:   bot.LiftHeight,
+		BottomLayerLiftSpeed:    bot.LiftSpeed,
 	}
 
 	// Create all the layers
