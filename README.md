@@ -124,6 +124,11 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     Options for '.cws':
     
     
+    Options for '.fdg':
+    
+      -e, --encryption-seed uint32   Specify a specific encryption seed
+      -v, --version int              Specify the CTB version (2 or 3) (default 2)
+    
     Options for '.lgs':
     
     
@@ -178,6 +183,7 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         photon             Anycubic Photon           Size: 1440x2560, 68x121 mm,	Format: .photon 
         photon0            Anycubic Photon Zero      Size: 480x854, 55.4x98.6 mm,	Format: .pw0 
         photons            Anycubic Photon S         Size: 1440x2560, 68x121 mm,	Format: .pws 
+        polaris             Voxelab Polaris          Size: 1440x2560, 68x121 mm,	Format: .fdg 
         s400                 Kelant S400             Size: 2560x1600, 192x120 mm,	Format: .zip 
         shuffle             Phrozen Shuffle          Size: 1440x2560, 67.7x120 mm,	Format: .zip 
         sl1                   Prusa SL1              Size: 1440x2560, 68x121 mm,	Format: .sl1 

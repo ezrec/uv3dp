@@ -14,6 +14,7 @@ import (
 	_ "github.com/ezrec/uv3dp/ctb"
 	_ "github.com/ezrec/uv3dp/cws"
 	_ "github.com/ezrec/uv3dp/czip"
+	_ "github.com/ezrec/uv3dp/fdg"
 	_ "github.com/ezrec/uv3dp/lgs"
 	_ "github.com/ezrec/uv3dp/phz"
 	_ "github.com/ezrec/uv3dp/pws"
