@@ -131,6 +131,11 @@ func (pf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	exp := printable.Exposure()
 	bot := printable.Bottom()
 
+	mach, ok := printable.Metadata("Machine")
+	if !ok {
+		mach = "default"
+	}
+
 	// First, compute the rle images
 	type rleInfo struct {
 		offset uint32
@@ -192,7 +197,7 @@ func (pf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	previewTinyBase := savePreview(previewHugeBase, &previewHuge, uv3dp.PreviewTypeHuge)
 
 	machineBase := savePreview(previewTinyBase, &previewTiny, uv3dp.PreviewTypeTiny)
-	machine := "default"
+	machine, _ := mach.(string)
 	machineSize := len(machine)
 
 	layerDefBase := machineBase + uint32(machineSize)
@@ -393,7 +398,8 @@ func (pf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 	}
 
 	prop := uv3dp.Properties{
-		Preview: make(map[uv3dp.PreviewType]image.Image),
+		Preview:  make(map[uv3dp.PreviewType]image.Image),
+		Metadata: make(map[string]interface{}),
 	}
 
 	header := phzHeader{}
@@ -405,6 +411,12 @@ func (pf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 	if header.Magic != defaultHeaderMagic {
 		err = fmt.Errorf("Unknown header magic: 0x%08x", header.Magic)
 		return
+	}
+
+	// Machine Name
+	mach := string(data[header.MachineOffset : header.MachineOffset+header.MachineSize])
+	if len(mach) > 0 {
+		prop.Metadata["Machine"] = mach
 	}
 
 	// Collect previews
@@ -492,6 +504,8 @@ func (pf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 	exp.LiftSpeed = header.LiftSpeed
 	exp.RetractSpeed = header.RetractSpeed
 	exp.RetractHeight = defaultRetractHeight
+
+	prop.Metadata["Machine"] = mach
 
 	phz := &Print{
 		Print:    uv3dp.Print{Properties: prop},

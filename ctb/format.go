@@ -91,7 +91,7 @@ type ctbSlicer struct {
 	_               [7]uint32 // 00: 7 all-zeros
 	MachineOffset   uint32    // 1c: Machine name offset
 	MachineSize     uint32    // 20: Machine name length
-	EncryptionMode  uint32    // 24: Always 0xf for CTB
+	EncryptionMode  uint32    // 24: Always 0xf for CTB v3, 0x07 for CTB v2
 	TimeSeconds     uint32    // 28:
 	Unknown2C       uint32    // 2c: Always 1?
 	ChiTuBoxVersion [4]byte   // 30: major, minor, patch, release
@@ -163,7 +163,7 @@ func NewFormatter(suffix string) (cf *Formatter) {
 	}
 
 	cf.Uint32VarP(&cf.EncryptionSeed, "encryption-seed", "e", 0, "Specify a specific encryption seed")
-	cf.IntVarP(&cf.Version, "version", "v", 2, "Specify the CTB version (2 or 3)")
+	cf.IntVarP(&cf.Version, "version", "v", 3, "Specify the CTB version (2 or 3)")
 
 	return
 }
@@ -178,6 +178,11 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	size := printable.Size()
 	exp := printable.Exposure()
 	bot := printable.Bottom()
+
+	mach, ok := printable.Metadata("Machine")
+	if !ok {
+		mach = "default"
+	}
 
 	// First, compute the rle images
 	type rleInfo struct {
@@ -251,7 +256,7 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	slicerSize, _ := restruct.SizeOf(&slicer)
 
 	machineBase := slicerBase + uint32(slicerSize)
-	machine := "default"
+	machine, _ := mach.(string)
 	machineSize := len(machine)
 
 	layerDefBase := machineBase + uint32(machineSize)
@@ -392,16 +397,20 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	if param.RetractSpeed < 0 {
 		param.RetractSpeed = defaultRetractSpeed
 	}
-	param.Unknown38 = 0x1234
+	param.Unknown38 = 0
 
 	// ctbSlicer
 	slicer.MachineOffset = machineBase
 	slicer.MachineSize = uint32(machineSize)
-	slicer.EncryptionMode = 7 // Magic!
 	slicer.TimeSeconds = 0x12345678
-	slicer.ChiTuBoxVersion[0] = 1 // Magic!
-	slicer.ChiTuBoxVersion[1] = 6
-	slicer.ChiTuBoxVersion[2] = 3
+	slicer.EncryptionMode = 0x7 // Magic!
+	if cf.Version > 2 {
+		slicer.EncryptionMode = 0xf // Magic!
+	}
+	slicer.ChiTuBoxVersion[0] = 0 // Magic!
+	slicer.ChiTuBoxVersion[1] = 0
+	slicer.ChiTuBoxVersion[2] = 7
+	slicer.ChiTuBoxVersion[3] = 1
 	slicer.Unknown2C = 1 // Magic?
 	slicer.Unknown34 = 0 // Magic?
 
@@ -494,7 +503,8 @@ func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 	}
 
 	prop := uv3dp.Properties{
-		Preview: make(map[uv3dp.PreviewType]image.Image),
+		Preview:  make(map[uv3dp.PreviewType]image.Image),
+		Metadata: make(map[string]interface{}),
 	}
 
 	header := ctbHeader{}
@@ -515,6 +525,12 @@ func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 		if err != nil {
 			return
 		}
+	}
+
+	// Machine Name
+	mach := string(data[slicer.MachineOffset : slicer.MachineOffset+slicer.MachineSize])
+	if len(mach) > 0 {
+		prop.Metadata["Machine"] = mach
 	}
 
 	// Collect previews

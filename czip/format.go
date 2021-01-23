@@ -181,8 +181,14 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 	bot := printable.Bottom().Exposure
 	bot_count := printable.Bottom().Count
 
+	mach, ok := printable.Metadata("Machine")
+	if !ok {
+		mach = "default"
+	}
+	machine, _ := mach.(string)
+
 	cfg := czipConfig{
-		MachineType:             "default",
+		MachineType:             machine,
 		EstimatedPrintTime:      float32(uv3dp.PrintDuration(printable) / time.Second),
 		Volume:                  0.0,
 		Resin:                   "default",
@@ -396,7 +402,9 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		thumbImage[pt] = thumb
 	}
 
-	prop := uv3dp.Properties{}
+	prop := uv3dp.Properties{
+		Metadata: make(map[string]interface{}),
+	}
 
 	size := &prop.Size
 	size.X = header.ResolutionX
@@ -427,6 +435,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 	bot.Exposure.LightPWM = 255
 
 	prop.Preview = thumbImage
+	prop.Metadata["Machine"] = header.MachineType
 
 	czip := &Print{
 		Print:    uv3dp.Print{Properties: prop},
