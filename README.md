@@ -175,7 +175,9 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Known machines:
     
-        e6                     EPAX E6               Size: 1620x2560, 81x128 mm,	Format: .ctb --version=3
+        e10-4k                 EPAX E10 mono 4K      Size: 2400x3840, 120x192 mm,	Format: .ctb --version=3
+        e10-5k                 EPAX E10 mono 5K      Size: 2880x4920, 135x216 mm,	Format: .ctb --version=3
+        e6                     EPAX E6 mono          Size: 1620x2560, 81x128 mm,	Format: .ctb --version=3
         elfin                Nova3D Elfin            Size: 1410x2550, 73x132 mm,	Format: .cws 
         inkspire            Zortrax Inkspire         Size: 1440x2560, 72x128 mm,	Format: .zcodex 
         ld-002r            Creality LD-002R          Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
@@ -201,17 +203,5 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
         x1n                    EPAX X1N              Size: 1440x2560, 68x121 mm,	Format: .ctb --version=2
         x9                     EPAX X9               Size: 1600x2560, 120x192 mm,	Format: .cbddlp 
     
-    Known resins: (from /home/jmcmullan/.config/ChiTuBox/machine/7.cfg)
+    Known resins: (from local user ChiTuBox config)
     
-        EPAX Dental Model for 0.05mm             bottom 8 layers, 50; nominal 6
-        EPAX General Purpose Rapid for 0.05mm    bottom 8 layers, 50; nominal 6
-        EPAX Hard and Tough for 0.05mm           bottom 8 layers, 50; nominal 6
-        EPAX Hard for 0.05mm                     bottom 8 layers, 50; nominal 6
-        EPAX Jewelry Castable for 0.05mm         bottom 8 layers, 50; nominal 16
-        EPAX Porcelain-like Resin for 0.05mm     bottom 8 layers, 50; nominal 6
-        EPAX Soy for 0.05mm                      bottom 8 layers, 50; nominal 9
-        EPAX Water Washable for 0.05mm           bottom 8 layers, 50; nominal 9
-        Profile                                  bottom 8 layers, 50; nominal 22
-        eSUN Hard and Tough for 0.05mm           bottom 8 layers, 50; nominal 8
-        eSUN Standard/Bio for 0.05mm             bottom 8 layers, 50; nominal 6
-        eSUN Water Washable for 0.05mm           bottom 8 layers, 50; nominal 9
