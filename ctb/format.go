@@ -405,7 +405,7 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	slicer.TimeSeconds = 0x12345678
 	slicer.EncryptionMode = 0x7 // Magic!
 	if cf.Version > 2 {
-		slicer.EncryptionMode = 0xf // Magic!
+		slicer.EncryptionMode = 0x2000000F // Magic! - Per layer timings support
 	}
 	slicer.ChiTuBoxVersion[0] = 0 // Magic!
 	slicer.ChiTuBoxVersion[1] = 0
