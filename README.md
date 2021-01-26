@@ -205,3 +205,10 @@ The command line tool is designed to be used in a 'pipeline' style, for example:
     
     Known resins: (from local user ChiTuBox config)
     
+        Profile                                  bottom 5 layers, 50; nominal 15
+        Voxelab Black for 0.05mm                 bottom 6 layers, 50; nominal 10
+        Voxelab Green for 0.05mm                 bottom 6 layers, 50; nominal 10
+        Voxelab Grey for 0.05mm                  bottom 6 layers, 50; nominal 8
+        Voxelab Red for 0.05mm                   bottom 6 layers, 50; nominal 10
+        Voxelab Transparent for 0.05mm           bottom 6 layers, 50; nominal 10
+        Voxelab White for 0.05mm                 bottom 6 layers, 50; nominal 9
