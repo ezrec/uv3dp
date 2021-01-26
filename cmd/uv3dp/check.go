@@ -21,18 +21,18 @@ func (mod *checkModifier) LayerZ(index int) (z float32) {
 		panic(fmt.Sprintf("Layer %d: Z value of %.02fmm is too close to the screen", index, z))
 	}
 
-    if index > 0 {
-        prev_z := mod.Printable.LayerZ(index - 1)
-        if z < prev_z {
-            panic(fmt.Sprintf("Layer %d: Z value of %.02fmm is below the previous layer at %.02fmm", index, z, prev_z))
-        }
+	if index > 0 {
+		prev_z := mod.Printable.LayerZ(index - 1)
+		if z < prev_z {
+			panic(fmt.Sprintf("Layer %d: Z value of %.02fmm is below the previous layer at %.02fmm", index, z, prev_z))
+		}
 
-        nominal_dz := mod.Printable.Size().LayerHeight
+		nominal_dz := mod.Printable.Size().LayerHeight
 
-        if (z - prev_z) > nominal_dz*1.5 {
-            panic(fmt.Sprintf("Layer %d: Layer height of %.02fmm is too far from nominal of %.02fmm", index, z-prev_z, nominal_dz))
-        }
-    }
+		if (z - prev_z) > nominal_dz*1.5 {
+			panic(fmt.Sprintf("Layer %d: Layer height of %.02fmm is too far from nominal of %.02fmm", index, z-prev_z, nominal_dz))
+		}
+	}
 
 	return
 }
