@@ -201,6 +201,12 @@ func evaluate(args []string) (err error) {
 					return
 				}
 			} else {
+				// Check the file before saving
+				input, err = CheckFilter(input)
+				if err != nil {
+					return
+				}
+
 				// Otherwise save the file
 				if param.Progress {
 					uv3dp.SetProgress(&cliProgress{Format: format})
