@@ -37,7 +37,22 @@ func NewInfoCommand() (info *InfoCommand) {
 	return
 }
 
+func printExposure(mode string, exp *uv3dp.Exposure) {
+	fmt.Printf("%v:\n", mode)
+	fmt.Printf("  Exposure: %.2gs on, %.2gs off", exp.LightOnTime, exp.LightOffTime)
+	if exp.LightPWM != 255 {
+		fmt.Printf(", PWM %v", exp.LightPWM)
+	}
+	fmt.Printf("  Lift: %v mm, %v mm/min\n",
+		exp.LiftHeight, exp.LiftSpeed)
+	fmt.Printf("  Retract: %v mm, %v mm/min\n",
+		exp.RetractHeight, exp.RetractSpeed)
+}
+
 func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, err error) {
+	exp := input.Exposure()
+	bot := input.Bottom()
+
 	if info.SizeSummary {
 		size := input.Size()
 		fmt.Printf("Layers: %v, %vx%v slices, %.2f x %.2f x %.2f mm bed required\n",
@@ -55,27 +70,8 @@ func (info *InfoCommand) Filter(input uv3dp.Printable) (output uv3dp.Printable, 
 	}
 
 	if info.ExposureSummary {
-		exp := input.Exposure()
-		bot := input.Bottom()
-
-		fmt.Printf("Exposure: %.2gs on, %.2gs off",
-			exp.LightOnTime,
-			exp.LightOffTime)
-		if exp.LightPWM != 255 {
-			fmt.Printf(", PWM %v", exp.LightPWM)
-		}
-		fmt.Println()
-		fmt.Printf("Bottom: %.2gs on, %.2gs off",
-			bot.Exposure.LightOnTime,
-			bot.Exposure.LightOffTime)
-		if bot.Exposure.LightPWM != 255 {
-			fmt.Printf(", PWM %v", bot.Exposure.LightPWM)
-		}
-		fmt.Printf(" (%v layers)\n", bot.Count)
-		fmt.Printf("Lift: %v mm, %v mm/min\n",
-			exp.LiftHeight, exp.LiftSpeed)
-		fmt.Printf("Retract: %v mm, %v mm/min\n",
-			exp.RetractHeight, exp.RetractSpeed)
+		printExposure(fmt.Sprintf("Bottom (%v layers)", bot.Count), &bot.Exposure)
+		printExposure("Normal", &exp)
 
 		keys := input.MetadataKeys()
 

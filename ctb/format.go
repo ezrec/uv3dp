@@ -37,7 +37,7 @@ const (
 
 type ctbHeader struct {
 	Magic          uint32     // 00:
-	Version        uint32     // 04: Always '2'
+	Version        uint32     // 04: Always '3'
 	BedSizeMM      [3]float32 // 08:
 	_              [2]uint32  // 14:
 	HeightMM       float32    // 1c:
@@ -220,7 +220,6 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 			return base
 		}
 
-		base += uint32(previewSize)
 		size := pic.Bounds().Size()
 		if size == image.Pt(0, 0) {
 			return base
@@ -231,6 +230,8 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		if len(rle) == 0 {
 			return base
 		}
+
+		base += uint32(previewSize)
 
 		rleHash[hash] = rleInfo{offset: base, rle: rle}
 		rleHashList = append(rleHashList, hash)
@@ -246,7 +247,14 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 	previewHugeBase := headerBase + uint32(headerSize)
 
 	previewTinyBase := savePreview(previewHugeBase, &previewHuge, uv3dp.PreviewTypeHuge)
+	if previewTinyBase == previewHugeBase {
+		previewHugeBase = 0
+	}
+
 	paramBase := savePreview(previewTinyBase, &previewTiny, uv3dp.PreviewTypeTiny)
+	if paramBase == previewTinyBase {
+		previewTinyBase = 0
+	}
 
 	param := ctbParam{}
 	paramSize, _ := restruct.SizeOf(&param)
@@ -440,8 +448,13 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err
 		fileData[base], _ = restruct.Pack(binary.LittleEndian, &layer)
 	}
 
-	fileData[int(previewHugeBase)], _ = restruct.Pack(binary.LittleEndian, &previewHuge)
-	fileData[int(previewTinyBase)], _ = restruct.Pack(binary.LittleEndian, &previewTiny)
+	if previewHugeBase > 0 {
+		fileData[int(previewHugeBase)], _ = restruct.Pack(binary.LittleEndian, &previewHuge)
+	}
+
+	if previewTinyBase > 0 {
+		fileData[int(previewTinyBase)], _ = restruct.Pack(binary.LittleEndian, &previewTiny)
+	}
 
 	for _, hash := range rleHashList {
 		info := rleHash[hash]
@@ -623,7 +636,7 @@ func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 		var param ctbParam
 
 		addr := int(header.ParamOffset)
-		err = restruct.Unpack(data[addr:], binary.LittleEndian, &param)
+		err = restruct.Unpack(data[addr:addr+int(header.ParamSize)], binary.LittleEndian, &param)
 		if err != nil {
 			return
 		}
