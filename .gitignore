@@ -16,3 +16,6 @@
 *.swp
 *.uvj
 *.zip
+
+# Ignore goreleaser debris
+dist/

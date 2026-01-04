@@ -1,0 +1,27 @@
+---
+version: 2
+project_name: uv3dp
+builds:
+  - env:
+    main: ./cmd/uv3dp
+    goos:
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+    ldflags:
+      - -X "main.Version={{.Tag}}"
+archives:
+  - format_overrides:
+      - goos: windows
+        format: zip
+nfpms:
+  - maintainer: Jason S. McMullan <jason.mcmullan@gmail.com>
+    description: UV 3DP File Conversion
+    homepage: https://github.com/ezrec/uv3dp
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
