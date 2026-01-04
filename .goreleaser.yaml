@@ -15,7 +15,7 @@ builds:
 archives:
   - format_overrides:
       - goos: windows
-        format: zip
+        formats: [ 'zip' ]
 nfpms:
   - maintainer: Jason S. McMullan <jason.mcmullan@gmail.com>
     description: UV 3DP File Conversion
