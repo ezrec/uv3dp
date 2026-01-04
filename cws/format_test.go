@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"image"
 	"image/png"
-	"io/ioutil"
+	"io"
 	"strings"
 	"time"
 
@@ -200,7 +200,7 @@ func TestEncodeEmptyCWS(t *testing.T) {
 
 		rc, _ := file.Open()
 		defer rc.Close()
-		got, _ := ioutil.ReadAll(rc)
+		got, _ := io.ReadAll(rc)
 
 		if !bytes.Equal(expected, got) {
 			if strings.HasSuffix(name, ".gcode") {

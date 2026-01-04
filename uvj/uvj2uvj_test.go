@@ -5,7 +5,6 @@
 package uvj
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -22,7 +21,10 @@ func TestUVJToUVJ(t *testing.T) {
 	}
 
 	// Open output file
-	file, err := ioutil.TempFile("", "*.uvj")
+	file, err := os.CreateTemp("", "*.uvj")
+	if err != nil {
+		t.Fatalf("can't create temp file: %v", err)
+	}
 	name := file.Name()
 	file.Close()
 

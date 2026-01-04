@@ -11,7 +11,7 @@ import (
 
 var (
 	machines_zcodex = map[string]uv3dp.Machine{
-		"inkspire": {Vendor: "Zortrax", Model: "Inkspire", Size: uv3dp.MachineSize{1440, 2560, 72.0, 128.0}},
+		"inkspire": {Vendor: "Zortrax", Model: "Inkspire", Size: uv3dp.MachineSize{X: 1440, Y: 2560, Xmm: 72.0, Ymm: 128.0}},
 	}
 )
 

@@ -13,7 +13,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"sort"
 	"strconv"
 	"strings"
@@ -25,13 +24,6 @@ import (
 
 var (
 	time_Now = time.Now
-)
-
-const (
-	mmPerPixel       = 0.0472500
-	defaultPixelsX   = 1440
-	defaultPixelsY   = 2560
-	defaultCacheSize = 16
 )
 
 var (
@@ -139,7 +131,6 @@ type ReadSeekCloser interface {
 
 type Print struct {
 	uv3dp.Print
-	config   sl1Config
 	layerPng []([]byte)
 }
 
@@ -339,7 +330,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		name := fmt.Sprintf("%s%05d.png", config.jobDir, n)
 		file, ok := fileMap[name]
 		if !ok {
-			err = errors.New(fmt.Sprintf("%s: Missing from archive", name))
+			err = fmt.Errorf("%s: Missing from archive", name)
 			return
 		}
 		var reader io.ReadCloser
@@ -349,7 +340,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		}
 		defer reader.Close()
 
-		layerPng[n], err = ioutil.ReadAll(reader)
+		layerPng[n], err = io.ReadAll(reader)
 		if err != nil {
 			return
 		}

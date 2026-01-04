@@ -7,7 +7,7 @@ package ctb
 import (
 	"fmt"
 	"image"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"sort"
 	"time"
@@ -510,7 +510,7 @@ func cipher(seed uint32, slice uint32, in []byte) (out []byte) {
 
 func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return
 	}
@@ -527,7 +527,7 @@ func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 	}
 
 	if header.Magic != defaultHeaderMagic {
-		err = fmt.Errorf("Unknown header magic: 0x%08x", header.Magic)
+		err = fmt.Errorf("unknown header magic: 0x%08x", header.Magic)
 		return
 	}
 

@@ -11,7 +11,7 @@ import (
 
 var (
 	machines_fdg = map[string]uv3dp.Machine{
-		"polaris": {Vendor: "Voxelab", Model: "Polaris", Size: uv3dp.MachineSize{1440, 2560, 68.04, 120.96}},
+		"polaris": {Vendor: "Voxelab", Model: "Polaris", Size: uv3dp.MachineSize{X: 1440, Y: 2560, Xmm: 68.04, Ymm: 120.96}},
 	}
 )
 

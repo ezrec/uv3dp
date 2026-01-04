@@ -54,7 +54,6 @@ func Rle4Decode(data []byte, bounds image.Rectangle) (gi *image.Gray) {
 		for ; span > 0; span-- {
 			if index >= len(gi.Pix) {
 				panic(fmt.Sprintf("%v bytes too many", span))
-				return
 			}
 			gi.Pix[index] = color
 			index++

@@ -11,7 +11,7 @@ import (
 
 var (
 	machines_sl1 = map[string]uv3dp.Machine{
-		"sl1": {Vendor: "Prusa", Model: "SL1", Size: uv3dp.MachineSize{1440, 2560, 68.04, 120.96}},
+		"sl1": {Vendor: "Prusa", Model: "SL1", Size: uv3dp.MachineSize{X: 1440, Y: 2560, Xmm: 68.04, Ymm: 120.96}},
 	}
 )
 

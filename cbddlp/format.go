@@ -7,7 +7,7 @@ package cbddlp
 import (
 	"fmt"
 	"image"
-	"io/ioutil"
+	"io"
 	"sort"
 	"time"
 
@@ -410,7 +410,7 @@ func (cf *Formatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) 
 
 func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return
 	}
@@ -435,7 +435,7 @@ func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.
 	}
 
 	if header.Magic != defaultHeaderMagic {
-		err = fmt.Errorf("Unknown header magic: 0x%08x", header.Magic)
+		err = fmt.Errorf("unknown header magic: 0x%08x", header.Magic)
 		return
 	}
 

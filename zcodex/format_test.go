@@ -11,8 +11,7 @@ import (
 	"encoding/json"
 	"image"
 	"image/png"
-	"io/ioutil"
-	"time"
+	"io"
 
 	"testing"
 
@@ -80,8 +79,6 @@ const (
 
 func TestEncodeEmptyZcodex(t *testing.T) {
 	// Collect an empty printable
-	time_Now = func() (now time.Time) { return }
-
 	buffPng := &bytes.Buffer{}
 	png.Encode(buffPng, image.NewGray(testProperties.Bounds()))
 	png_empty := buffPng.Bytes()
@@ -123,7 +120,7 @@ func TestEncodeEmptyZcodex(t *testing.T) {
 
 		rc, _ := file.Open()
 		defer rc.Close()
-		got, _ := ioutil.ReadAll(rc)
+		got, _ := io.ReadAll(rc)
 
 		if !bytes.Equal(expected, got) {
 			if name == "ResinMetadata!" {

@@ -11,66 +11,6 @@ import (
 	"encoding/binary"
 )
 
-const (
-	rle4EncodingLimit = 0xfff
-)
-
-// Encodings:
-//  0N NN -> Next 0xNNN bits are black
-//  fN NN -> Next 0xNNN bits are white
-//  1N -> next N bits are ??
-//  4N -> next N bits are ??
-//  8N -> next N bits are 50% grey
-//  9N -> next N bits are ??
-//  BN -> next N bits are ??
-//  DN -> next N bits are ??
-//  End is 16 bit checksum (?)
-
-func rle4EncodeBitmap(bm image.Image, bit, bits int) (rle []byte, hash uint64, bitsOn uint) {
-	base := bm.Bounds().Min
-	size := bm.Bounds().Size()
-
-	addRep := func(bit bool, rep int) {
-		if rep > 0 {
-			by := uint8(rep)
-			if bit {
-				by |= 0x80
-				bitsOn += uint(rep)
-			}
-			rle = append(rle, by)
-		}
-	}
-
-	obit := false
-	rep := 0
-	for y := 0; y < size.Y; y++ {
-		for x := 0; x < size.X; x++ {
-			c := bm.At(base.X+x, base.Y+y)
-			r, g, b, _ := c.RGBA()
-			ngrey := uint16(r | g | b)
-			nbit := (ngrey & (1 << ((16 - bits) + bit))) != 0
-			if nbit == obit {
-				rep++
-				if rep == rle4EncodingLimit {
-					addRep(obit, rep)
-					rep = 0
-				}
-			} else {
-				addRep(obit, rep)
-				obit = nbit
-				rep = 1
-			}
-		}
-	}
-
-	// Collect stragglers
-	addRep(obit, rep)
-
-	hash = hash64(rle)
-
-	return
-}
-
 func rle4DecodeInto(pix []uint8, rle []byte, mask uint8) (data []byte, err error) {
 	var index int
 

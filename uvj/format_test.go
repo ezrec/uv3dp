@@ -11,9 +11,8 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"io/ioutil"
+	"io"
 	"strings"
-	"time"
 
 	"testing"
 
@@ -219,8 +218,6 @@ const (
 
 func TestEncodeEmptyUVJ(t *testing.T) {
 	// Collect an empty printable
-	time_Now = func() (now time.Time) { return }
-
 	pattern := []uint8{0, 0, 0, 0, 0x11, 0x11, 0x33, 0x33, 0xff, 0xff, 0x7f, 0x55, 0x20, 0x00, 0x00}
 
 	buffPng := &bytes.Buffer{}
@@ -262,7 +259,7 @@ func TestEncodeEmptyUVJ(t *testing.T) {
 
 		rc, _ := file.Open()
 		defer rc.Close()
-		got, _ := ioutil.ReadAll(rc)
+		got, _ := io.ReadAll(rc)
 
 		if !bytes.Equal(expected, got) {
 			if strings.HasSuffix(name, ".json") {

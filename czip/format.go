@@ -13,7 +13,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"strconv"
 	"strings"
@@ -21,10 +20,6 @@ import (
 
 	"github.com/ezrec/uv3dp"
 	"github.com/spf13/pflag"
-)
-
-var (
-	time_Now = time.Now
 )
 
 type czipConfig struct {
@@ -152,7 +147,6 @@ type ReadSeekCloser interface {
 
 type Print struct {
 	uv3dp.Print
-	config   czipConfig
 	layerPng []([]byte)
 }
 
@@ -358,7 +352,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		name := fmt.Sprintf("%d.png", n+1)
 		file, ok := fileMap[name]
 		if !ok {
-			err = errors.New(fmt.Sprintf("%s: Missing from archive", name))
+			err = fmt.Errorf("%s: Missing from archive", name)
 			return
 		}
 		var reader io.ReadCloser
@@ -368,7 +362,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		}
 		defer reader.Close()
 
-		layerPng[n], err = ioutil.ReadAll(reader)
+		layerPng[n], err = io.ReadAll(reader)
 		if err != nil {
 			return
 		}

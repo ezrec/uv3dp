@@ -11,10 +11,10 @@ import (
 
 var (
 	machines_lgs = map[string]uv3dp.Machine{
-		"orange10": {Vendor: "Longer", Model: "Orange 10", Size: uv3dp.MachineSize{480, 854, 55.44, 98.64}},
+		"orange10": {Vendor: "Longer", Model: "Orange 10", Size: uv3dp.MachineSize{X: 480, Y: 854, Xmm: 55.44, Ymm: 98.64}},
 	}
 	machines_lgs30 = map[string]uv3dp.Machine{
-		"orange30": {Vendor: "Longer", Model: "Orange 30", Size: uv3dp.MachineSize{1440, 2560, 68.04, 120.96}},
+		"orange30": {Vendor: "Longer", Model: "Orange 30", Size: uv3dp.MachineSize{X: 1440, Y: 2560, Xmm: 68.04, Ymm: 120.96}},
 	}
 )
 

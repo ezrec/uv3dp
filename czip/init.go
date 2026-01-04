@@ -11,8 +11,8 @@ import (
 
 var (
 	machines_zip = map[string]uv3dp.Machine{
-		"s400":    {Vendor: "Kelant", Model: "S400", Size: uv3dp.MachineSize{2560, 1600, 192.0, 120.0}},
-		"shuffle": {Vendor: "Phrozen", Model: "Shuffle", Size: uv3dp.MachineSize{1440, 2560, 67.68, 120.32}},
+		"s400":    {Vendor: "Kelant", Model: "S400", Size: uv3dp.MachineSize{X: 2560, Y: 1600, Xmm: 192.0, Ymm: 120.0}},
+		"shuffle": {Vendor: "Phrozen", Model: "Shuffle", Size: uv3dp.MachineSize{X: 1440, Y: 2560, Xmm: 67.68, Ymm: 120.32}},
 	}
 )
 

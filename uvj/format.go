@@ -13,22 +13,9 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
-	"time"
 
 	"github.com/ezrec/uv3dp"
 	"github.com/spf13/pflag"
-)
-
-var (
-	time_Now = time.Now
-)
-
-const (
-	mmPerPixel       = 0.0472500
-	defaultPixelsX   = 1440
-	defaultPixelsY   = 2560
-	defaultCacheSize = 16
 )
 
 type ErrConfigMissing string
@@ -202,7 +189,7 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 	defer func() { cfg_reader.Close() }()
 
 	// Load the config file
-	data, err := ioutil.ReadAll(cfg_reader)
+	data, err := io.ReadAll(cfg_reader)
 	if err != nil {
 		return
 	}
@@ -230,7 +217,7 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 		name := fmt.Sprintf("slice/%08d.png", n)
 		file, ok := fileMap[name]
 		if !ok {
-			err = errors.New(fmt.Sprintf("%s: Missing from archive", name))
+			err = fmt.Errorf("%s: Missing from archive", name)
 			return
 		}
 		var reader io.ReadCloser
@@ -240,7 +227,7 @@ func (sf *UVJFormat) Decode(reader uv3dp.Reader, filesize int64) (printable uv3d
 		}
 		defer reader.Close()
 
-		layerPng[n], err = ioutil.ReadAll(reader)
+		layerPng[n], err = io.ReadAll(reader)
 		if err != nil {
 			return
 		}
@@ -314,7 +301,7 @@ func (uvj *UVJ) LayerExposure(index int) (exposure uv3dp.Exposure) {
 func (uvj *UVJ) LayerImage(index int) (layerImage *image.Gray) {
 	pngImage, err := png.Decode(bytes.NewReader(uvj.layerPng[index]))
 	if err != nil {
-		err = fmt.Errorf("Layer %v: %w", index, err)
+		err = fmt.Errorf("layer %v: %w", index, err)
 		panic(err)
 	}
 

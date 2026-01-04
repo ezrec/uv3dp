@@ -13,7 +13,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"reflect"
 	"strconv"
 	"strings"
@@ -251,7 +250,6 @@ type ReadSeekCloser interface {
 
 type Print struct {
 	uv3dp.Print
-	config   cwsConfig
 	layerPng []([]byte)
 }
 
@@ -429,7 +427,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		name := fmt.Sprintf("%s%04d.png", jobName, n)
 		file, ok := fileMap[name]
 		if !ok {
-			err = errors.New(fmt.Sprintf("%s: Missing from archive", name))
+			err = fmt.Errorf("%s: Missing from archive", name)
 			return
 		}
 		var reader io.ReadCloser
@@ -439,7 +437,7 @@ func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.P
 		}
 		defer reader.Close()
 
-		layerPng[n], err = ioutil.ReadAll(reader)
+		layerPng[n], err = io.ReadAll(reader)
 		if err != nil {
 			return
 		}

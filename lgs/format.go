@@ -10,7 +10,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image"
-	"io/ioutil"
+	"io"
 
 	"github.com/ezrec/uv3dp"
 	"github.com/go-restruct/restruct"
@@ -212,7 +212,7 @@ func (f *Formatter) Encode(writer uv3dp.Writer, p uv3dp.Printable) (err error) {
 
 func (cf *Formatter) Decode(file uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 	// Collect file
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return
 	}

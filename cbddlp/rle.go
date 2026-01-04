@@ -100,7 +100,7 @@ func rleDecodeInto(pix []uint8, rle []byte) (err error) {
 	}
 
 	if index != len(rle)-1 {
-		err = fmt.Errorf("What? Bytes left: %d", len(rle)-index-1)
+		err = fmt.Errorf("what? bytes left: %d", len(rle)-index-1)
 		return
 	}
 

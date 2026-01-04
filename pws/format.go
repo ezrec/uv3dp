@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/go-restruct/restruct"
 	"image"
-	"io/ioutil"
+	"io"
 
 	"github.com/ezrec/uv3dp"
 	"github.com/spf13/pflag"
@@ -458,7 +458,7 @@ func (sf *Format) Encode(writer uv3dp.Writer, printable uv3dp.Printable) (err er
 
 func (sf *Format) Decode(reader uv3dp.Reader, filesize int64) (printable uv3dp.Printable, err error) {
 
-	raw, err := ioutil.ReadAll(reader)
+	raw, err := io.ReadAll(reader)
 	if err != nil {
 		return
 	}

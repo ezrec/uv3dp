@@ -11,7 +11,10 @@ import (
 
 var (
 	machines_cws = map[string]uv3dp.Machine{
-		"elfin": {Vendor: "Nova3D", Model: "Elfin", Size: uv3dp.MachineSize{1410, 2550, 73.0, 132.0}},
+		"elfin": {Vendor: "Nova3D",
+			Model: "Elfin",
+			Size:  uv3dp.MachineSize{X: 1410, Y: 2550, Xmm: 73.0, Ymm: 132.0},
+		},
 	}
 )
 

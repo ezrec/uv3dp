@@ -51,7 +51,6 @@ func NewProgress(total int) (prog *Progress) {
 
 func (prog *Progress) Indicate() {
 	prog.Completed <- struct{}{}
-	return
 }
 
 func (prog *Progress) Close() {

@@ -11,7 +11,7 @@ import (
 
 var (
 	machines_phz = map[string]uv3dp.Machine{
-		"sonic-mini": {Vendor: "Phrozen", Model: "Sonic Mini", Size: uv3dp.MachineSize{1080, 1920, 68.04, 120.96}},
+		"sonic-mini": {Vendor: "Phrozen", Model: "Sonic Mini", Size: uv3dp.MachineSize{X: 1080, Y: 1920, Xmm: 68.04, Ymm: 120.96}},
 	}
 )
 

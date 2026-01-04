@@ -9,22 +9,15 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/ezrec/uv3dp"
 	"github.com/spf13/pflag"
-)
-
-var (
-	time_Now = time.Now
 )
 
 const (
@@ -296,7 +289,7 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 		name := fmt.Sprintf("ResinSlicesData/Slice%05d.png", sliceMap[n])
 		file, ok := fileMap[name]
 		if !ok {
-			err = errors.New(fmt.Sprintf("%s: Missing from archive", name))
+			err = fmt.Errorf("%s: Missing from archive", name)
 			return
 		}
 		var reader io.ReadCloser
@@ -306,7 +299,7 @@ func (sf *ZcodexFormat) Decode(reader uv3dp.Reader, filesize int64) (printable u
 		}
 		defer reader.Close()
 
-		layerPng[n], err = ioutil.ReadAll(reader)
+		layerPng[n], err = io.ReadAll(reader)
 		if err != nil {
 			return
 		}

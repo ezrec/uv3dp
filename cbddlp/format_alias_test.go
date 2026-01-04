@@ -37,28 +37,18 @@ func (ap *AliasPrintable) LayerImage(index int) (ig *image.Gray) {
 
 var (
 	// Collect an alias printable
-	aliasPrintable = &AliasPrintable{&uv3dp.Print{uv3dp.Properties{
-		Size: uv3dp.Size{
-			X: 10,
-			Y: 1,
-			Millimeter: uv3dp.SizeMillimeter{
-				X: 10.0,
-				Y: 1.0,
+	aliasPrintable = &AliasPrintable{&uv3dp.Print{
+		Properties: uv3dp.Properties{
+			Size: uv3dp.Size{
+				X: 10,
+				Y: 1,
+				Millimeter: uv3dp.SizeMillimeter{
+					X: 10.0,
+					Y: 1.0,
+				},
+				Layers:      1, // 1 normal
+				LayerHeight: 0.05,
 			},
-			Layers:      1, // 1 normal
-			LayerHeight: 0.05,
-		},
-		Exposure: uv3dp.Exposure{
-			LightOnTime:   0.000000001,
-			LightOffTime:  0.000000001,
-			LightPWM:      255,
-			LiftHeight:    1.0,
-			LiftSpeed:     1.0,
-			RetractHeight: 1.0,
-			RetractSpeed:  1.0,
-		},
-		Bottom: uv3dp.Bottom{
-			Count: 1,
 			Exposure: uv3dp.Exposure{
 				LightOnTime:   0.000000001,
 				LightOffTime:  0.000000001,
@@ -68,12 +58,23 @@ var (
 				RetractHeight: 1.0,
 				RetractSpeed:  1.0,
 			},
-		},
-		Preview: map[uv3dp.PreviewType]image.Image{
-			uv3dp.PreviewTypeTiny: image.NewGray(image.Rect(0, 0, 1, 1)),
-			uv3dp.PreviewTypeHuge: image.NewGray(image.Rect(0, 0, 1, 1)),
-		},
-	}}}
+			Bottom: uv3dp.Bottom{
+				Count: 1,
+				Exposure: uv3dp.Exposure{
+					LightOnTime:   0.000000001,
+					LightOffTime:  0.000000001,
+					LightPWM:      255,
+					LiftHeight:    1.0,
+					LiftSpeed:     1.0,
+					RetractHeight: 1.0,
+					RetractSpeed:  1.0,
+				},
+			},
+			Preview: map[uv3dp.PreviewType]image.Image{
+				uv3dp.PreviewTypeTiny: image.NewGray(image.Rect(0, 0, 1, 1)),
+				uv3dp.PreviewTypeHuge: image.NewGray(image.Rect(0, 0, 1, 1)),
+			},
+		}}}
 )
 
 // reuse 'bufferMap' from format_empty_test.go

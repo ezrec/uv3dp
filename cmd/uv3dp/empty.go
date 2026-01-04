@@ -83,7 +83,7 @@ func (ef *EmptyFormatter) Decode(file uv3dp.Reader, filesize int64) (printable u
 	}
 
 	layerImage := image.NewGray(prop.Bounds())
-	draw.Draw(layerImage, layerImage.Bounds(), &image.Uniform{C: color.Gray{Y: ef.Gray}}, image.ZP, draw.Src)
+	draw.Draw(layerImage, layerImage.Bounds(), &image.Uniform{C: color.Gray{Y: ef.Gray}}, image.Point{}, draw.Src)
 
 	printable = &EmptyPrint{
 		Print: uv3dp.Print{Properties: prop},

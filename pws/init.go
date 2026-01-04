@@ -11,10 +11,10 @@ import (
 
 var (
 	machines_pws = map[string]uv3dp.Machine{
-		"photons": {Vendor: "Anycubic", Model: "Photon S", Size: uv3dp.MachineSize{1440, 2560, 68.04, 120.96}},
+		"photons": {Vendor: "Anycubic", Model: "Photon S", Size: uv3dp.MachineSize{X: 1440, Y: 2560, Xmm: 68.04, Ymm: 120.96}},
 	}
 	machines_pw0 = map[string]uv3dp.Machine{
-		"photon0": {Vendor: "Anycubic", Model: "Photon Zero", Size: uv3dp.MachineSize{480, 854, 55.44, 98.64}},
+		"photon0": {Vendor: "Anycubic", Model: "Photon Zero", Size: uv3dp.MachineSize{X: 480, Y: 854, Xmm: 55.44, Ymm: 98.64}},
 	}
 )
 
