@@ -25,8 +25,7 @@ jobs:
 
       - name: Craft Linux Artifacts
         run: |
-          mkdir -p /home/runner/go/bin
-          go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          go install -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" ./cmd/uv3dp
           rm -rf uv3dp-${{ steps.release.outputs.TAG }}
           mkdir uv3dp-${{ steps.release.outputs.TAG }}
           cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
@@ -34,15 +33,15 @@ jobs:
 
       - name: Craft MacOS Artifacts
         run: |
-          GOOS=darwin GOARCH=amd64 go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          GOOS=darwin GOARCH=amd64 go install -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" ./cmd/uv3dp
           rm -rf uv3dp-${{ steps.release.outputs.TAG }}
           mkdir uv3dp-${{ steps.release.outputs.TAG }}
-          cp README.md $(go env GOPATH)/bin/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
+          cp README.md $(go env GOPATH)/bin/darwin_amd64/uv3dp uv3dp-${{ steps.release.outputs.TAG }}
           tar -jcvf uv3dp-${{ steps.release.outputs.TAG }}-macos-amd64.tar.bz2 uv3dp-${{ steps.release.outputs.TAG }}
 
       - name: Craft Windows Artifacts
         run: |
-          GOOS=windows GOARCH=amd64 go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
+          GOOS=windows GOARCH=amd64 go install -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" ./cmd/uv3dp
           zip -j uv3dp-${{ steps.release.outputs.TAG }}.zip README.md $(go env GOPATH)/bin/windows_amd64/uv3dp.exe
 
       - name: Create Release
