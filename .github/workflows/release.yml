@@ -25,6 +25,7 @@ jobs:
 
       - name: Craft Linux Artifacts
         run: |
+          mkdir -p /home/runner/go/bin
           go get -ldflags "-X main.Version=${{ steps.release.outputs.TAG }}" github.com/${GITHUB_REPOSITORY}/cmd/uv3dp
           rm -rf uv3dp-${{ steps.release.outputs.TAG }}
           mkdir uv3dp-${{ steps.release.outputs.TAG }}
